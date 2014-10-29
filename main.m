@@ -4,9 +4,9 @@
 % Implémenté par Nassime BLIN 2014 pour Gepetto LAAS - CNRS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-close all
-clc
-clear
+close all ;
+clc ;
+clear ;
 
 
 
@@ -307,7 +307,6 @@ while ( converge == 0 )
     % Init
     tau_C_x = 0;
     tau_C_y = 0;
-    epsilon_tot = 0;
     K = length(epsilon);
     C =   zeros(length(sample), 3);     % contact point x, y, z 
     x_G = zeros(length(sample), 3);     % for x_G, \dot x_G, \ddot x_G
