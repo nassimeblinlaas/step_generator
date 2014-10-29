@@ -10,10 +10,6 @@ clear ;
 
 
 
-
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % delarations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,9 +28,9 @@ WAIST = 1;              % labels
 RLEG_JOINT5 = 7;        %
 LLEG_JOINT5 = 13;       %
 RARM_JOINT5 = 23;       %
-LARM_JOINT5 = 31;       %
+LARM_JOINT5 = 30;       %
 RARM_JOINT6 = 24;       %
-LARM_JOINT6 = 32;       %
+LARM_JOINT6 = 31;       %
 
 v_ref_B  = zeros(3,1);  % waist linear speed
 v_ref_F_1 = zeros(3,1);
@@ -136,9 +132,13 @@ for i = 1 : length(uLINK) - 1
     uLINK(i).q   = halfsitting(i);
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Big loop
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 ForwardKinematics(1);
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Step 1 : give waist
@@ -147,13 +147,18 @@ ForwardKinematics(1);
 v_ref_B   = [ 0; 0; 0];     % waist speed vector
 w_ref_B   = [ 0; 0; 0];
 v_ref_F_1 = [ 0; 0; 0];
-w_ref_H_1 = [ 0; 0; 0];
 v_ref_F_2 = [ 0; 0; 0];
+w_ref_F_1 = [ 0; 0; 0];
+w_ref_F_2 = [ 0; 0; 0];
+v_ref_H_1 = [ 0.1; 0; 0.1];
+v_ref_H_2 = [ 0.1; 0; 0.1];
+w_ref_H_1 = [ 0; 0; 0];
 w_ref_H_2 = [ 0; 0; 0];
 
 
 iteration   = 0;            % algorithm iteration
 converge    = 0;
+
 
 %while ( converge == 0 )
 while ( iteration < 10 )
@@ -193,14 +198,14 @@ while ( iteration < 10 )
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_H1;
     route = FindRoute(RARM_JOINT5);
-    J_arm_1 = CalcJacobian(route(:,3:end));
+    J_arm_1 = CalcJacobian(route);
     d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
 
     % arm 2
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_H2;
     route = FindRoute(LARM_JOINT5);
-    J_arm_2 = CalcJacobian(route(:,4:end));
+    J_arm_2 = CalcJacobian(route);
     d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
 
 
