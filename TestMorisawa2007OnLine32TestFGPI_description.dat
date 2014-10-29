@@ -1,0 +1,38 @@
+1. Time
+2. Com X
+3. Com Y
+4. Com Z
+5. Com Yaw
+6. Com dX
+7. Com dY
+8. Com dZ
+9. ZMP X (waist ref.)
+10. ZMP Y (waist ref.)
+11. Left Foot X
+12. Left Foot Y
+13. Left Foot Z
+14. Left Foot dX
+15. Left Foot dY
+16. Left Foot dZ
+17. Left Foot ddX
+18. Left Foot ddY
+19. Left Foot ddZ
+20. Left Foot Theta
+21. Left Foot Omega
+22. Left Foot Omega2
+23. Right Foot X
+24. Right Foot Y
+25. Right Foot Z
+26. Right Foot dX
+27. Right Foot dY
+28. Right Foot dZ
+29. Right Foot ddX
+30. Right Foot ddY
+31. Right Foot ddZ
+32. Right Foot Theta
+33. Right Foot Omega
+34. Right Foot Omega2
+35. ZMP X (world ref.)
+36. ZMP Y (world ref.)
+37. Waist X (world ref.)
+38. Waist Y (world ref.)
