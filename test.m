@@ -96,18 +96,18 @@ for i = 1:length(Data)
        contact_coord(i, 1) = Data(i, 11);    % coord x LF
        contact_coord(i, 2) = Data(i, 12);    % coord y LF
        contact_coord(i, 3) = Data(i, 13);    % coord z LF
-       normal_vectors(i, 1) = 0;    % x1
-       normal_vectors(i, 2) = 0;    % y1
-       normal_vectors(i, 3) = 1;    % z1
+       normal_vectors(i, 1) = 0;             % x1
+       normal_vectors(i, 2) = 0;             % y1
+       normal_vectors(i, 3) = 1;             % z1
     end
     if Data(i, 25) == 0
         is_contact(i, 2) = 1;
         contact_coord(i, 4) = Data(i, 23);    % coord x RF
         contact_coord(i, 5) = Data(i, 24);    % coord y RF
         contact_coord(i, 6) = Data(i, 25);    % coord z RF
-        normal_vectors(i, 4) = 0;    % x2
-        normal_vectors(i, 5) = 0;    % y2
-        normal_vectors(i, 6) = 1;    % z2
+        normal_vectors(i, 4) = 0;             % x2
+        normal_vectors(i, 5) = 0;             % y2
+        normal_vectors(i, 6) = 1;             % z2
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -348,8 +348,11 @@ while ( converge == 0 )
     C(3) = (1 - alpha) * C(3);
     
     
-    
-    
+    if (sample > 2)
+        x_G(sample, 1) = 2 * x_G(sample - 1, 2) - x_G(sample - 2, 2) + period * period * x_G(sample, 3);
+        x_G(sample, 2) = x_G(sample - 1, 
+
+    end
     
     
     
