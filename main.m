@@ -33,6 +33,8 @@ RLEG_JOINT5 = 7;        %
 LLEG_JOINT5 = 13;       %
 RARM_JOINT5 = 23;       %
 LARM_JOINT5 = 31;       %
+RARM_JOINT6 = 24;       %
+LARM_JOINT6 = 32;       %
 
 v_ref_B  = zeros(3,1);  % waist linear speed
 v_ref_F_1 = zeros(3,1);
@@ -184,32 +186,28 @@ while ( iteration < 10 )
     temp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
     route = FindRoute(RLEG_JOINT5);
     J_leg_1 = CalcJacobian(route);
-    J_leg_1_inv = inv(J_leg_1) * 200 / pi;  % POURQUOI 200/pi ?
-    d_theta_leg_1 = J_leg_1_inv * xi_F_1 - J_leg_1 * temp * xi_B;  % angular speeds
+    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ temp * xi_B;  % angular speeds
 
     % leg 2
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_F2;
     route = FindRoute(LLEG_JOINT5);
     J_leg_2 = CalcJacobian(route);
-    J_leg_2_inv = inv(J_leg_2);
-    d_theta_leg_2 = J_leg_2_inv * xi_F_2 - J_leg_2 * temp * xi_B;
+    d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ temp * xi_B;
 
     % arm 1
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_F1;
     route = FindRoute(RARM_JOINT5);
     J_arm_1 = CalcJacobian(route(:,3:end));
-    J_arm_1_inv = inv(J_arm_1);
-    d_theta_arm_1 = J_arm_1_inv * xi_H_1 - J_arm_1 * temp * xi_B;
+    d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
 
     % aem 2
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_F1;
     route = FindRoute(LARM_JOINT5);
     J_arm_2 = CalcJacobian(route(:,4:end));
-    J_arm_2_inv = inv(J_arm_2);
-    d_theta_arm_2 = J_arm_2_inv * xi_H_2 - J_arm_2 * temp * xi_B;
+    d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
 
 
 
@@ -387,13 +385,7 @@ while ( iteration < 10 )
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % xi_B = A^-1 y
-
-    M_F_1_star = [M_leg_1 ; H_leg_1] * J_leg_1_inv;
-    M_F_2_star = [M_leg_1 ; H_leg_1] * J_leg_2_inv;
-    M_H_1_star = [M_leg_1 ; H_leg_1] * J_arm_1_inv;
-    M_H_2_star = [M_leg_1 ; H_leg_1] * J_arm_2_inv;
-
-
+    
     temp0 = zeros(6,6);
     temp0(1:3, 1:3) = M * I3;
     temp0(1:3, 4:6) = -M * r_B_G;
@@ -413,13 +405,13 @@ while ( iteration < 10 )
 
 
     A = temp0 ...
-        - (M_F_1_star * temp1 + M_F_2_star * temp2) ...
-        - (M_H_1_star * temp3 + M_H_2_star * temp4);
+        - ([M_leg_1 ; H_leg_1] * J_leg_1\ temp1 + [M_leg_1 ; H_leg_1] * J_leg_2\ temp2) ...
+        - ([M_leg_1 ; H_leg_1] * J_arm_1\ temp3 + [M_leg_1 ; H_leg_1] * J_arm_2\ temp4);
 
 
     y = [P_ref_x ; P_ref_y ; P_ref_z ; L] ...
-        - ( M_F_1_star * xi_F_1 + M_F_2_star * xi_F_2 ) ...
-        - ( M_H_1_star * xi_H_1 + M_H_2_star * xi_H_2 );
+        - ( [M_leg_1 ; H_leg_1] * J_leg_1\ xi_F_1 + [M_leg_1 ; H_leg_1] * J_leg_2\ xi_F_2 ) ...
+        - ( [M_leg_1 ; H_leg_1] * J_arm_1\ xi_H_1 + [M_leg_1 ; H_leg_1] * J_arm_2\ xi_H_2 );
 
     xi_B_ref = inv(A) * y;
     %xi_B_ref = A\y;
