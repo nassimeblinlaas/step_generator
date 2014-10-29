@@ -76,14 +76,15 @@ fprintf('Initialisation\n')
 
 
 
-sample = sample + 1
 
 
 uLINK = loadHRPdata('HRP2main_full.wrl');
 
 fprintf('Reading ./morisawa.csv\n')
 Data = csvread('./morisawa.csv');  
+halfsitting = load('./halfsitting.dat');
 fprintf('Reading done\n')
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Build contact points data
 is_contact = zeros( length(Data) , 2);
@@ -113,23 +114,23 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-halfsitting = load('./halfsitting.dat');
+sample = sample + 1
 
 M = TotalMass(1);	% total robot mass
 
 uLINK(WAIST).p = ...
-    [Data(sample,1), Data(sample,2), Data(sample,3)]' ;        % waist position
+    [Data(sample + 1, 1), Data(sample + 1, 2), Data(sample + 1, 3)]' ;        % waist position
 theta = Data(sample, 5);                                         % yaw = lacet = 0
-uLINK(WAIST).R = [cos(theta),-sin(theta),0;...                    % waist rotation                  sin(theta),cos(theta),0;...
+uLINK(WAIST).R = [cos(theta),-sin(theta),0;...                    % waist rotation sin(theta),cos(theta),0;...
                   sin(theta),cos(theta),0;...
                   0,0,1 ];             
               
-uLINK(WAIST).v = ...
-    [Data(sample,6), Data(sample,7), Data(sample,8)]';         % waist speed
-uLINK(WAIST).w = [0;0;0];                                         % waist angular speed
+%uLINK(WAIST).v = ...
+%    [Data(sample,6), Data(sample,7), Data(sample,8)]';              % waist speed
+uLINK(WAIST).w = [0;0;0];                                           % waist angular speed
 
-uLINK(RARM_JOINT5).p = uLINK(WAIST).p + [0.30;0;0];               % right arm position −30 cm
-uLINK(LARM_JOINT5).p = uLINK(WAIST).p - [0.30;0;0];               % left  arm position +30 cm
+uLINK(RARM_JOINT5).p = uLINK(WAIST).p + [0.30;0;0];                 % right arm position −30 cm
+uLINK(LARM_JOINT5).p = uLINK(WAIST).p - [0.30;0;0];                 % left  arm position +30 cm
 uLINK(RLEG_JOINT5).p = ...
     [Data(sample,11), Data(sample,12), Data(sample,13)]';      % right foot position
 uLINK(LLEG_JOINT5).p = ...
@@ -140,12 +141,6 @@ for i = 1 : length(uLINK) - 1
 end
 
 ForwardKinematics(1);
-ForwardVelocity(1);
-
-%com = calcCoM;
-%Zc  = com(3);
-%cx0 = com(1);
-%cy0 = com(2);
 
 
 
@@ -153,12 +148,12 @@ ForwardVelocity(1);
 % Step 1 : give waist
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-v_ref_B  = uLINK(WAIST).v;   % waist position vector
+v_ref_B   = [ 0; 0; 0];   % waist speed vector
 w_ref_B   = [ 0; 0; 0];
 v_ref_F_1 = [ 0; 0; 0];
-w_ref_F_1 = [ 0; 0; 0];
+w_ref_H_1 = [ 0; 0; 0];
 v_ref_F_2 = [ 0; 0; 0];
-w_ref_F_2 = [ 0; 0; 0];
+w_ref_H_2 = [ 0; 0; 0];
 
 
 iteration   = 0;     	% algorithm iteration
@@ -168,9 +163,9 @@ while ( converge == 0 )
 
     iteration = iteration + 1
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 2 : find angular speeds having new linear and angular speed of B
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % vector waist -> end effector
     r_B_F1 = hat(uLINK(WAIST).p - uLINK(RLEG_JOINT5).p);
@@ -218,9 +213,9 @@ while ( converge == 0 )
 
 
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 3
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     [M_leg_1, H_leg_1, I_tilde_leg_1] = MH(RLEG_JOINT5);     %call MH subroutine
     [M_leg_2, H_leg_2, I_tilde_leg_2] = MH(LLEG_JOINT5);
@@ -262,18 +257,18 @@ while ( converge == 0 )
 
 
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 4 : give \ddot{z_G}
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % suppose that :
     ddZg = 0; % always
 
 
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 5 : give lambda_k, slope of the ground
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % hypothesis : slope is zero
     % => Sum(n_kz)/K = 1
@@ -330,6 +325,7 @@ while ( converge == 0 )
         end
     end 
     
+    
     % Contact points
     epsilon_tot = sum(epsilon);
     for k = 1:K
@@ -347,36 +343,30 @@ while ( converge == 0 )
     C(sample, 2) = alpha * C(sample, 2);
     C(sample, 3) = (1 - alpha) * C(sample, 3);
     
-    z_G = 0.814;
     
+    % z_G = 0.814;  
+    % Accelerations
     if (sample > 2)
         x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...
-            ( M * (ddZg + g) * (x_G(sample, 1) - C(sample, 1)) - dL(2) - tau_C_x )      % G x acceleration
-        x_G(sample + 1, 2) = x_G(sample, 2) + x_G(sample, 3) * period;                  % G x speed
-        x_G(sample + 1, 1) = 2 * x_G(sample, 2) - x_G(sample - 1, 2) + period * period * x_G(sample, 3);    % G x position
+            ( M * (ddZg + G) * (x_G(sample, 1) - C(sample, 1)) - dL(2) - tau_C_y );      % G x acceleration
+        x_G(sample + 1, 2) = x_G(sample, 2) + x_G(sample, 3) * period;                   % G x speed
+        x_G(sample + 1, 1) = 2 * x_G(sample, 1) - x_G(sample - 1, 1) + period * period * x_G(sample, 3);    % G x position
             
-        y_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...            % G x acceleration
-            ( M * (ddZg + g) * (y_G(sample, 1) - C(sample, 2)) - dL(1) - tau_C_y ) ;    % G x speed
-        y_G(sample + 1, 2) = y_G(sample - 1, 2) + y_G(sample, 3) * period;              
-        y_G(sample + 1 , 1) = 2 * y_G(sample , 2) - y_G(sample - 1, 2) + period * period * y_G(sample, 3);    % G x position
-   
-    
+        y_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...             
+            ( M * (ddZg + G) * (y_G(sample, 1) - C(sample, 2)) - dL(1) - tau_C_x );         % G x acceleration
+        y_G(sample + 1, 2) = y_G(sample, 2) + y_G(sample, 3) * period;                      % G x speed
+        y_G(sample + 1, 1) = 2 * y_G(sample, 1) - y_G(sample - 1, 1) + period * period * y_G(sample, 3);    % G x position
     else
-
-        x_G(sample, 3) = 
-        x_G(sample, 2) = 
+        x_G(sample, 3) = 0
+        x_G(sample, 2) = 0
         x_G(sample, 1) = Data(sample, 2);
 
-        x_G(sample, 3) = 
-        x_G(sample, 2) = 
-        x_G(sample, 1) = Data(sample, 3);
-
+        y_G(sample, 3) = 0
+        y_G(sample, 2) = 0
+        y_G(sample, 1) = Data(sample, 3);
     end
     
-    
-    
-    
-  
+     
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 7 : find  P_ref
