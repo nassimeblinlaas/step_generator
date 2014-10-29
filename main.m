@@ -351,11 +351,14 @@ while ( converge == 0 )
     
     if (sample > 2)
         x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...
-            ( M * (ddZg + g) * (x_G(sample, 1) - C(sample, 1)) - dL(2) - tau_C_x )
+            ( M * (ddZg + g) * (x_G(sample, 1) - C(sample, 1)) - dL(2) - tau_C_x ) ;
         x_G(sample, 2) = x_G(sample - 1, 2) + x_G(sample - 1, 3) * period;
         x_G(sample, 1) = 2 * x_G(sample - 1, 2) - x_G(sample - 2, 2) + period * period * x_G(sample, 3);
         
-        
+        y_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...
+            ( M * (ddZg + g) * (y_G(sample, 1) - C(sample, 2)) - dL(1) - tau_C_y ) ;
+        y_G(sample, 2) = y_G(sample - 1, 2) + y_G(sample - 1, 3) * period;
+        y_G(sample, 1) = 2 * y_G(sample - 1, 2) - y_G(sample - 2, 2) + period * period * y_G(sample, 3);
     end
     
     
