@@ -24,15 +24,15 @@ G = 9.81 ;
 
 
 MG = 9.81 ;
-pZ = 0.6487;        % position Z of robot constant
+pZ = 0.6487;            % position Z of robot constant
 
-period = 0.005;      % sampling period in seconds
+period = 0.005;         % sampling period in seconds
 
-WAIST = 1;          % labels
-RLEG_JOINT5 = 7;    %
-LLEG_JOINT5 = 13;   %
-RARM_JOINT5 = 23;   %
-LARM_JOINT5 = 31;   %
+WAIST = 1;              % labels
+RLEG_JOINT5 = 7;        %
+LLEG_JOINT5 = 13;       %
+RARM_JOINT5 = 23;       %
+LARM_JOINT5 = 31;       %
 
 v_ref_B  = zeros(3,1);  % waist linear speed
 v_ref_F_1 = zeros(3,1);
@@ -64,7 +64,7 @@ sample = 0;             % current sample
 L_prev = zeros(3,1);    % L value of n-1 sample
 x_G_prev = 0;
 y_G_prev = 0;
-err = [0.1; 0.1];   % converging threshold
+err = [0.1; 0.1];       % converging threshold
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Initialisation
@@ -94,21 +94,21 @@ normal_vectors = zeros(length(Data), 3 * 2);    % three scalars for vector forea
 for i = 1:length(Data)
     if Data(i, 13) == 0
        is_contact(i, 1) = 1;
-       contact_coord(i, 1) = Data(i, 11);    % coord x LF
-       contact_coord(i, 2) = Data(i, 12);    % coord y LF
-       contact_coord(i, 3) = Data(i, 13);    % coord z LF
-       normal_vectors(i, 1) = 0;             % x1
-       normal_vectors(i, 2) = 0;             % y1
-       normal_vectors(i, 3) = 1;             % z1
+       contact_coord(i, 1) = Data(i, 11);       % coord x LF
+       contact_coord(i, 2) = Data(i, 12);       % coord y LF
+       contact_coord(i, 3) = Data(i, 13);       % coord z LF
+       normal_vectors(i, 1) = 0;                % x1
+       normal_vectors(i, 2) = 0;                % y1
+       normal_vectors(i, 3) = 1;                % z1
     end
     if Data(i, 25) == 0
         is_contact(i, 2) = 1;
-        contact_coord(i, 4) = Data(i, 23);    % coord x RF
-        contact_coord(i, 5) = Data(i, 24);    % coord y RF
-        contact_coord(i, 6) = Data(i, 25);    % coord z RF
-        normal_vectors(i, 4) = 0;             % x2
-        normal_vectors(i, 5) = 0;             % y2
-        normal_vectors(i, 6) = 1;             % z2
+        contact_coord(i, 4) = Data(i, 23);      % coord x RF
+        contact_coord(i, 5) = Data(i, 24);      % coord y RF
+        contact_coord(i, 6) = Data(i, 25);      % coord z RF
+        normal_vectors(i, 4) = 0;               % x2
+        normal_vectors(i, 5) = 0;               % y2
+        normal_vectors(i, 6) = 1;               % z2
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,21 +120,21 @@ M = TotalMass(1);	% total robot mass
 
 uLINK(WAIST).p = ...
     [Data(sample + 1, 1), Data(sample + 1, 2), Data(sample + 1, 3)]' ;        % waist position
-theta = Data(sample, 5);                                         % yaw = lacet = 0
-uLINK(WAIST).R = [cos(theta),-sin(theta),0;...                    % waist rotation sin(theta),cos(theta),0;...
+theta = Data(sample, 5);                                        % yaw = lacet = 0
+uLINK(WAIST).R = [cos(theta),-sin(theta),0;...                  % waist rotation sin(theta),cos(theta),0;...
                   sin(theta),cos(theta),0;...
                   0,0,1 ];             
               
 %uLINK(WAIST).v = ...
-%    [Data(sample,6), Data(sample,7), Data(sample,8)]';              % waist speed
-uLINK(WAIST).w = [0;0;0];                                           % waist angular speed
+%    [Data(sample,6), Data(sample,7), Data(sample,8)]';         % waist speed
+uLINK(WAIST).w = [0;0;0];                                       % waist angular speed
 
-uLINK(RARM_JOINT5).p = uLINK(WAIST).p + [0.30;0;0];                 % right arm position −30 cm
-uLINK(LARM_JOINT5).p = uLINK(WAIST).p - [0.30;0;0];                 % left  arm position +30 cm
+uLINK(RARM_JOINT5).p = uLINK(WAIST).p + [0.30;0;0];             % right arm position −30 cm
+uLINK(LARM_JOINT5).p = uLINK(WAIST).p - [0.30;0;0];             % left  arm position +30 cm
 uLINK(RLEG_JOINT5).p = ...
-    [Data(sample,11), Data(sample,12), Data(sample,13)]';      % right foot position
+    [Data(sample,11), Data(sample,12), Data(sample,13)]';       % right foot position
 uLINK(LLEG_JOINT5).p = ...
-    [Data(sample,23), Data(sample,24), Data(sample,25)]';      % left foot position
+    [Data(sample,23), Data(sample,24), Data(sample,25)]';       % left foot position
 
 for i = 1 : length(uLINK) - 1
     uLINK(i).q   = halfsitting(i);
@@ -148,7 +148,7 @@ ForwardKinematics(1);
 % Step 1 : give waist
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-v_ref_B   = [ 0; 0; 0];   % waist speed vector
+v_ref_B   = [ 0; 0; 0];     % waist speed vector
 w_ref_B   = [ 0; 0; 0];
 v_ref_F_1 = [ 0; 0; 0];
 w_ref_H_1 = [ 0; 0; 0];
@@ -156,7 +156,7 @@ v_ref_F_2 = [ 0; 0; 0];
 w_ref_H_2 = [ 0; 0; 0];
 
 
-iteration   = 0;     	% algorithm iteration
+iteration   = 0;            % algorithm iteration
 converge    = 0
 
 while ( converge == 0 )
