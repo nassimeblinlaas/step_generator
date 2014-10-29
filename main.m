@@ -326,12 +326,11 @@ while ( converge == 0 )
 
             tau_C_y = tau_C_y + epsilon(k) * ( contact_coord(sample, x) * normal_vectors(sample, z) - ...
                 contact_coord(sample, z) * normal_vectors(sample, x) );
-        
-            epsilon_tot = epsilon_tot + epsilon(k);
         end
     end 
     
     % Contact points
+    epsilon_tot = sum(epsilon);
     for k = 1:K
         offset = (k-1) * 3;
         x = offset + 1;
@@ -350,8 +349,8 @@ while ( converge == 0 )
     z_G = 0.814;
     
     if (sample > 2)
-        x_G(sample, 1) = 2 * x_G(sample - 1, 2) - x_G(sample - 2, 2) + period * period * x_G(sample, 3);
-        x_G(sample, 2) = x_G(sample - 1, 2) + x_G(sample - 1, 3) * period;
+        x_G(sample, 1) = 2 * x_G(sample - 1, 2) - x_G(sample - 2, 2) + period * period * x_G(sample, 3)
+        x_G(sample, 2) = x_G(sample - 1, 2) + x_G(sample - 1, 3) * period
         x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3) ) ) ) 
 
     end
