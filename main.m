@@ -184,7 +184,7 @@ while ( iteration < 10 )
     temp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
     route = FindRoute(RLEG_JOINT5);
     J_leg_1 = CalcJacobian(route);
-    J_leg_1_inv = inv(J_leg_1) * 200 / pi;
+    J_leg_1_inv = inv(J_leg_1) * 200 / pi;  % POURQUOI 200/pi ?
     d_theta_leg_1 = J_leg_1_inv * xi_F_1 - J_leg_1 * temp * xi_B;  % angular speeds
 
     % leg 2
