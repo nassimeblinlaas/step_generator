@@ -191,14 +191,14 @@ while ( iteration < 10 )
 
     % arm 1
     temp = eye(6,6);
-    temp(1:3,4:6) = -r_B_F1;
+    temp(1:3,4:6) = -r_B_H1;
     route = FindRoute(RARM_JOINT5);
     J_arm_1 = CalcJacobian(route(:,3:end));
     d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
 
     % aem 2
     temp = eye(6,6);
-    temp(1:3,4:6) = -r_B_F1;
+    temp(1:3,4:6) = -r_B_H2;
     route = FindRoute(LARM_JOINT5);
     J_arm_2 = CalcJacobian(route(:,4:end));
     d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
@@ -451,14 +451,31 @@ d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ temp * xi_B;
 
 % arm 1
 temp = eye(6,6);
-temp(1:3,4:6) = -r_B_F1;
+temp(1:3,4:6) = -r_B_H1;
 route = FindRoute(RARM_JOINT5);
 J_arm_1 = CalcJacobian(route(:,3:end));
 d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
 
 % aem 2
 temp = eye(6,6);
-temp(1:3,4:6) = -r_B_F1;
+temp(1:3,4:6) = -r_B_H2;
 route = FindRoute(LARM_JOINT5);
 J_arm_2 = CalcJacobian(route(:,4:end));
 d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
