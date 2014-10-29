@@ -72,13 +72,7 @@ err = [0.1; 0.1];       % converging threshold
 % Initialisation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 fprintf('Initialisation\n')
-
-
-
-
 
 uLINK = loadHRPdata('HRP2main_full.wrl');
 
@@ -413,8 +407,8 @@ while ( iteration < 10 )
         - ( [M_leg_1 ; H_leg_1] * J_leg_1\ xi_F_1 + [M_leg_1 ; H_leg_1] * J_leg_2\ xi_F_2 ) ...
         - ( [M_leg_1 ; H_leg_1] * J_arm_1\ xi_H_1 + [M_leg_1 ; H_leg_1] * J_arm_2\ xi_H_2 );
 
-    xi_B_ref = inv(A) * y;
-    %xi_B_ref = A\y;
+    %xi_B_ref = inv(A) * y;
+    xi_B_ref = A\y;
 
 
 
@@ -428,6 +422,8 @@ while ( iteration < 10 )
         fprintf('converge\n');
         converge = 1;
     else
+        xi_ref = xi_B_ref(1:2)
+        xi = xi_B(1:2)
         fprintf('ne converge pas\n');
         converge = 0;
     end
@@ -439,41 +435,30 @@ end
 % Step 10 : find angular speeds having new linear and angular speed of B
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-% leg 1
+ % leg 1
 temp = eye(6,6);
 temp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
 route = FindRoute(RLEG_JOINT5);
 J_leg_1 = CalcJacobian(route);
-J_leg_1_inv = inv(J_leg_1) * 200 / pi;
-d_theta_leg_1 = J_leg_1_inv * xi_F_1 - J_leg_1 * temp * xi_B_ref;  % angular speeds
+d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ temp * xi_B;  % angular speeds
 
 % leg 2
 temp = eye(6,6);
 temp(1:3,4:6) = -r_B_F2;
 route = FindRoute(LLEG_JOINT5);
 J_leg_2 = CalcJacobian(route);
-J_leg_2_inv = inv(J_leg_2);
-d_theta_leg_2 = J_leg_2_inv * xi_F_2 - J_leg_2 * temp * xi_B_ref;
+d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ temp * xi_B;
 
-% bras 1
+% arm 1
 temp = eye(6,6);
 temp(1:3,4:6) = -r_B_F1;
 route = FindRoute(RARM_JOINT5);
 J_arm_1 = CalcJacobian(route(:,3:end));
-J_arm_1_inv = inv(J_arm_1);
-d_theta_arm_1 = J_arm_1_inv * xi_H_1 - J_arm_1 * temp * xi_B_ref;
+d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
 
-% bras 2
+% aem 2
 temp = eye(6,6);
 temp(1:3,4:6) = -r_B_F1;
 route = FindRoute(LARM_JOINT5);
 J_arm_2 = CalcJacobian(route(:,4:end));
-J_arm_2_inv = inv(J_arm_2);
-d_theta_arm_2 = J_arm_2_inv * xi_H_2 - J_arm_2 * temp * xi_B_ref;
-
-
-
-
-
-
+d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
