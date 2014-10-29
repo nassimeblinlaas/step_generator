@@ -157,11 +157,11 @@ w_ref_H_2 = [ 0; 0; 0];
 
 
 iteration   = 0;            % algorithm iteration
-converge    = 0
+converge    = 0;
 
-while ( converge == 0 )
-
-    iteration = iteration + 1
+%while ( converge == 0 )
+while ( iteration < 10 )
+    iteration = iteration + 1;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 2 : find angular speeds having new linear and angular speed of B
@@ -195,7 +195,7 @@ while ( converge == 0 )
     J_leg_2_inv = inv(J_leg_2);
     d_theta_leg_2 = J_leg_2_inv * xi_F_2 - J_leg_2 * temp * xi_B;
 
-    % bras 1
+    % arm 1
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_F1;
     route = FindRoute(RARM_JOINT5);
@@ -203,7 +203,7 @@ while ( converge == 0 )
     J_arm_1_inv = inv(J_arm_1);
     d_theta_arm_1 = J_arm_1_inv * xi_H_1 - J_arm_1 * temp * xi_B;
 
-    % bras 2
+    % aem 2
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_F1;
     route = FindRoute(LARM_JOINT5);
@@ -217,7 +217,7 @@ while ( converge == 0 )
     % Step 3
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    [M_leg_1, H_leg_1, I_tilde_leg_1] = MH(RLEG_JOINT5);     %call MH subroutine
+    [M_leg_1, H_leg_1, I_tilde_leg_1] = MH(RLEG_JOINT5);     % call MH subroutine
     [M_leg_2, H_leg_2, I_tilde_leg_2] = MH(LLEG_JOINT5);
     [M_arm_1, H_arm_1, I_tilde_arm_1] = MH(RARM_JOINT5);   
     [M_arm_2, H_arm_2, I_tilde_arm_2] = MH(LARM_JOINT5);
@@ -246,14 +246,14 @@ while ( converge == 0 )
     B(7:end) = d_theta;
 
     PL = temp0 * B;
-    P = PL(1:3);            % linear momentum
-    L = PL(4:6);            % angular momentum
+    P = PL(1:3);                    % linear momentum
+    L = PL(4:6);                    % angular momentum
 
 
 
     dL = (L - L_prev) / period;     % finite difference method
 
-    L_prev = L;             % save previous value for next step
+    L_prev = L;                     % save previous value for next step
 
 
 
@@ -271,11 +271,8 @@ while ( converge == 0 )
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % hypothesis : slope is zero
-    % => Sum(n_kz)/K = 1
     % => alpha = 0   -> equations (16) (17) (18)
     alpha = 0;
-
-    % or Somme(lambda_k) = 1
 
     % for two contact points :
     lambda = zeros(2, 1);
@@ -287,16 +284,15 @@ while ( converge == 0 )
     
     
     epsilon(1) = (1 - alpha) * M * ( ddZg + G ) * ...
-        ( ( lambda(1) ) / ( lambda(1) * 1 + lambda(2) * 1 ) ) % multiplication by 1 is normal vectors n_k_z
+        ( ( lambda(1) ) / ( lambda(1) * 1 + lambda(2) * 1 ) ); % multiplication by 1 is normal vectors n_k_z
 
     epsilon(2) = (1 - alpha) * M * ( ddZg + G ) * ...
-        ( ( lambda(2) ) / ( lambda(2) * 1 + lambda(2) * 1 ) ) % multiplication by 1 is normal vectors n_k_z
+        ( ( lambda(2) ) / ( lambda(2) * 1 + lambda(2) * 1 ) ); % multiplication by 1 is normal vectors n_k_z
 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 6 : find d_d_x_G and d_d_y_G
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
     
     % Init
@@ -346,24 +342,33 @@ while ( converge == 0 )
     
     % z_G = 0.814;  
     % Accelerations
-    if (sample > 2)
+    if (sample > 1)
         x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...
-            ( M * (ddZg + G) * (x_G(sample, 1) - C(sample, 1)) - dL(2) - tau_C_y );      % G x acceleration
-        x_G(sample + 1, 2) = x_G(sample, 2) + x_G(sample, 3) * period;                   % G x speed
+            ( M * (ddZg + G) * (x_G(sample, 1) - C(sample, 1)) - dL(2) - tau_C_y );         % G x acceleration
+        x_G(sample + 1, 2) = x_G(sample, 2) + x_G(sample, 3) * period;                      % G x speed
         x_G(sample + 1, 1) = 2 * x_G(sample, 1) - x_G(sample - 1, 1) + period * period * x_G(sample, 3);    % G x position
             
         y_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...             
             ( M * (ddZg + G) * (y_G(sample, 1) - C(sample, 2)) - dL(1) - tau_C_x );         % G x acceleration
         y_G(sample + 1, 2) = y_G(sample, 2) + y_G(sample, 3) * period;                      % G x speed
         y_G(sample + 1, 1) = 2 * y_G(sample, 1) - y_G(sample - 1, 1) + period * period * y_G(sample, 3);    % G x position
+   
     else
-        x_G(sample, 3) = 0
-        x_G(sample, 2) = 0
-        x_G(sample, 1) = Data(sample, 2);
+        x_G(1, 3) = 0;
+        x_G(1, 2) = 0;
+        x_G(1, 1) = Data(1, 2);
+        
+        x_G(2, 3) = 0;
+        x_G(2, 2) = 0;
+        x_G(2, 1) = Data(2, 2);
 
-        y_G(sample, 3) = 0
-        y_G(sample, 2) = 0
-        y_G(sample, 1) = Data(sample, 3);
+        y_G(1, 3) = 0;
+        y_G(1, 2) = 0;
+        y_G(1, 1) = Data(1, 3);
+        
+        y_G(2, 3) = 0;
+        y_G(2, 2) = 0;
+        y_G(2, 1) = Data(2, 3);        
     end
     
      
@@ -430,10 +435,10 @@ while ( converge == 0 )
 
     if ( ( xi_B_ref(1:2) - xi_B(1:2) ) < err )
         fprintf('converge\n');
-        converge = 1
+        converge = 1;
     else
         fprintf('ne converge pas\n');
-        converge = 0
+        converge = 0;
     end
 
 
