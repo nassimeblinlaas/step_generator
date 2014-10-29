@@ -338,21 +338,21 @@ while ( converge == 0 )
         y = offset + 2;
         z = offset + 3;
         
-        C(1) = C(1) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, x);   % C_x
-        C(2) = C(2) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, y);   % C_y
-        C(3) = C(3) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, z);   % C_z
+        C(sample, 1) = C(sample, 1) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, x);   % x_C
+        C(sample, 2) = C(sample, 2) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, y);   % y_C
+        C(sample, 3) = C(sample, 3) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, z);   % z_C
     end
     
-    C(1) = alpha * C(1);
-    C(2) = alpha * C(2);
-    C(3) = (1 - alpha) * C(3);
+    C(sample, 1) = alpha * C(sample, 1);
+    C(sample, 2) = alpha * C(sample, 2);
+    C(sample, 3) = (1 - alpha) * C(sample, 3);
     
     z_G = 0.814;
     
     if (sample > 2)
         x_G(sample, 1) = 2 * x_G(sample - 1, 2) - x_G(sample - 2, 2) + period * period * x_G(sample, 3);
         x_G(sample, 2) = x_G(sample - 1, 2) + x_G(sample - 1, 3) * period;
-        x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - ) ) ) 
+        x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3) ) ) ) 
 
     end
     
