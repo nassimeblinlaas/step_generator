@@ -309,7 +309,7 @@ while ( converge == 0 )
     tau_C_y = 0;
     epsilon_tot = 0;
     K = length(epsilon);
-    C = zeros(length(sample), 3);   % for x, y, z
+    C = zeros(length(sample), 3);   % for x, y, z contact point
     x_G = zeros(length(sample), 3); % for x_G, \dot x_G, \ddot x_G
     y_G = zeros(length(sample), 3); % for y_G, \dot y_G, \ddot y_G
     
@@ -347,10 +347,12 @@ while ( converge == 0 )
     C(2) = alpha * C(2);
     C(3) = (1 - alpha) * C(3);
     
+    z_G = 0.814;
     
     if (sample > 2)
         x_G(sample, 1) = 2 * x_G(sample - 1, 2) - x_G(sample - 2, 2) + period * period * x_G(sample, 3);
-        x_G(sample, 2) = x_G(sample - 1, 
+        x_G(sample, 2) = x_G(sample - 1, 2) + x_G(sample - 1, 3) * period;
+        x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - ) ) ) 
 
     end
     
