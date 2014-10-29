@@ -368,8 +368,8 @@ while ( converge == 0 )
     % Step 7 : find  P_ref
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    P_ref_x = M * d_x_G;
-    P_ref_y = M * d_x_G;
+    P_ref_x = M * x_G(sample, 2);
+    P_ref_y = M * y_G(sample, 2);
     P_ref_z = M * Data(sample, 8);
 
 
