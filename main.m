@@ -182,10 +182,10 @@ for sample = 1 : length(Data)
     v_ref_F_2 = [ Data(sample, 23); Data(sample, 24); Data(sample, 25)];
     w_ref_F_2 = [ 0; 0; 0];
     
-    v_ref_H_1 = [0 ; 0 ; 0];
+    v_ref_H_1 = [ 0; 0; 0];
     w_ref_H_1 = [ 0; 0; 0];
     
-    v_ref_H_2 = [0 ; 0 ; 0];
+    v_ref_H_2 = [ 0; 0; 0];
     w_ref_H_2 = [ 0; 0; 0];
     
     %[0.1 ; 0.1 ; 0.1];
