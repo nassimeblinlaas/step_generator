@@ -79,6 +79,8 @@ d_theta_leg_2 = zeros(6,1);
 d_theta_arm_1 = zeros(6,1);
 d_theta_arm_2 = zeros(6,1);
 
+
+
 I3 = eye(3,3);
 
 sample = 0;             % current sample
@@ -99,6 +101,8 @@ uLINK = loadHRPdata('HRP2main_full.wrl');
 fprintf('Reading ./morisawa.csv\n')
 Whole_data = csvread('./morisawa.csv');
 Data = Whole_data(1:50, :);
+given_xi_B = zeros(size(Data), 6);
+res_xi_B = zeros(size(Data), 6);
 halfsitting = load('./halfsitting.dat');
 fprintf('Reading done\n')
 
@@ -170,8 +174,7 @@ for sample = 1 : length(Data)
     % Step 1 : give waist linear and angular speed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    
-    v_ref_B   = [ 0; 0; 0];     % waist speed vector
+    v_ref_B   = [ Data(sample, 2); Data(sample, 3); 0];     % waist speed vector
     w_ref_B   = [ 0; 0; 0];
     
     v_ref_F_1 = [ 0; 0; 0];
@@ -198,7 +201,7 @@ for sample = 1 : length(Data)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %while ( converge == 0 )
     while ( iteration < 10 )
-        iteration = iteration + 1
+        iteration = iteration + 1;
 
         
         
@@ -453,23 +456,26 @@ for sample = 1 : length(Data)
 
 
         if ( ( xi_B_ref(1:2) - xi_B(1:2) ) < err )
-            fprintf('converge\n');
+            %fprintf('converge\n');
             converge = 1;
         else
             xi_ref = xi_B_ref(1:2);
             xi = xi_B(1:2);
-            fprintf('ne converge pas\n');
+            %fprintf('ne converge pas\n');
             converge = 0;
         end
 
 
     end
-
+    
+    given_xi_B(sample, :) = xi_B_ref;
+    res_xi_B(sample, :) = xi_B;
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 10 : find angular speeds having new linear and angular speed of B
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-     % leg 1
+    % leg 1
     tmp = eye(6,6);
     tmp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
     route = FindRoute(RLEG_JOINT5);
@@ -508,7 +514,9 @@ end
 
 
 
-
+plot(res_xi_B(1), 'r')
+hold on
+plot(given_xi_B(1), 'b')
 
 
 
