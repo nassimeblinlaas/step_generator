@@ -176,10 +176,10 @@ for sample = 1 : length(Data)
     w_ref_B   = [ 0; 0; 0];
     v_ref_B   = v_CoM + cross(r_bc,w_ref_B) ;     % waist speed vector
     
-    v_ref_F_1 = [ Data(sample, 11); Data(sample, 14); Data(sample, 15)];
+    v_ref_F_1 = [ Data(sample, 14); Data(sample, 15); Data(sample, 16)];
     w_ref_F_1 = [ 0; 0; 0];
     
-    v_ref_F_2 = [ Data(sample, 23); Data(sample, 26); Data(sample, 27)];
+    v_ref_F_2 = [ Data(sample, 26); Data(sample, 27); Data(sample, 28)];
     w_ref_F_2 = [ 0; 0; 0];
     
     v_ref_H_1 = [ 0; 0; 0];
