@@ -16,45 +16,42 @@ clear ;
 
 global uLINK G
 G = 9.81 ;
+
 number_of_samples = 10; % size of data to treat
-
-
-MG = 9.81 ;
 pZ = 0.6487;            % position Z of robot constant
-
 period = 0.005;         % sampling period in seconds
 
-WAIST = 1;         % labels
-RLEG_JOINT0 = 2;   %
-RLEG_JOINT1 = 3;   %
-RLEG_JOINT2 = 4;   %
-RLEG_JOINT3 = 5;   %
-RLEG_JOINT4 = 6;   %
-RLEG_JOINT5 = 7;   %
-LLEG_JOINT0 = 8;   %
-LLEG_JOINT1 = 9;   %
-LLEG_JOINT2 = 10;  %
-LLEG_JOINT3 = 11;  %
-LLEG_JOINT4 = 12;  %
-LLEG_JOINT5 = 13;  %
-CHEST_JOINT0 = 14; %
-CHEST_JOINT1 = 15; %
-HEAD_JOINT0 = 16;  %
-HEAD_JOINT1 = 17;  %
-RARM_JOINT0 = 18;  %
-RARM_JOINT1 = 19;  %
-RARM_JOINT2 = 20;  %
-RARM_JOINT3 = 21;  %
-RARM_JOINT4 = 22;  %
-RARM_JOINT5 = 23;  %
-RARM_JOINT6 = 24;  %
-LARM_JOINT0 = 25;  %
-LARM_JOINT1 = 26;  %
-LARM_JOINT2 = 27;  %
-LARM_JOINT3 = 28;  %
-LARM_JOINT4 = 29;  %
-LARM_JOINT5 = 30;  %
-LARM_JOINT6 = 31;  %
+WAIST = 1;              % labels
+RLEG_JOINT0 = 2;        %
+RLEG_JOINT1 = 3;        %
+RLEG_JOINT2 = 4;        %
+RLEG_JOINT3 = 5;        %
+RLEG_JOINT4 = 6;        %
+RLEG_JOINT5 = 7;        %
+LLEG_JOINT0 = 8;        %
+LLEG_JOINT1 = 9;        %
+LLEG_JOINT2 = 10;       %
+LLEG_JOINT3 = 11;       %
+LLEG_JOINT4 = 12;       %
+LLEG_JOINT5 = 13;       %
+CHEST_JOINT0 = 14;      %
+CHEST_JOINT1 = 15;      %
+HEAD_JOINT0 = 16;       %
+HEAD_JOINT1 = 17;       %
+RARM_JOINT0 = 18;       %
+RARM_JOINT1 = 19;       %
+RARM_JOINT2 = 20;       %
+RARM_JOINT3 = 21;       %
+RARM_JOINT4 = 22;       %
+RARM_JOINT5 = 23;       %
+RARM_JOINT6 = 24;       %
+LARM_JOINT0 = 25;       %
+LARM_JOINT1 = 26;       %
+LARM_JOINT2 = 27;       %
+LARM_JOINT3 = 28;       %
+LARM_JOINT4 = 29;       %
+LARM_JOINT5 = 30;       %
+LARM_JOINT6 = 31;       %
 
 v_ref_B  = zeros(3,1);  % waist linear speed
 v_ref_F_1 = zeros(3,1);
@@ -137,7 +134,7 @@ end
 
 
 
-M = TotalMass(1);	% total robot mass
+M = TotalMass(1);                               % total robot mass
 
 uLINK(WAIST).p = [ 0 0 0.6487 ]' ;
 uLINK(WAIST).R = eye(3,3) ;
@@ -157,14 +154,14 @@ end
 ForwardVelocity(1);
 
 CoM_init = calcCoM();
-r_bc = uLINK(WAIST).p - CoM_init;  %vector from CoM to Base Link origin
+r_bc = uLINK(WAIST).p - CoM_init;               % vector from CoM to Base Link origin
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for sample = 1 : number_of_samples
-    sample = sample;             % for debug usage
+    sample = sample;                            % for debug usage
     
     ForwardKinematics(1);
     ForwardVelocity(1);
@@ -191,8 +188,8 @@ for sample = 1 : number_of_samples
     %[0.1 ; 0.1 ; 0.1];
 
 
-    iteration   = 0;            % algorithm iteration
-    converge    = 0;            % convergence boolean
+    iteration   = 0;                            % algorithm iteration
+    converge    = 0;                            % convergence boolean
 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -215,7 +212,7 @@ for sample = 1 : number_of_samples
         r_B_H1 = hat(uLINK(WAIST).p - uLINK(RARM_JOINT5).p);
         r_B_H2 = hat(uLINK(WAIST).p - uLINK(LARM_JOINT5).p);
 
-        xi_B   = [ v_ref_B   ; w_ref_B   ];              
+        xi_B   = [ v_ref_B   ; w_ref_B   ];
         xi_F_1 = [ v_ref_F_1 ; w_ref_F_1 ];
         xi_F_2 = [ v_ref_F_2 ; w_ref_F_2 ];
         xi_H_1 = [ v_ref_H_1 ; w_ref_H_1 ];
@@ -225,7 +222,7 @@ for sample = 1 : number_of_samples
         tmp = [eye(3,3),-r_B_F1;zeros(3,3),eye(3,3)];
         route = FindRoute(RLEG_JOINT5);
         J_leg_1 = CalcJacobian(route);
-        d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;   
+        d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;
 
         % leg 2
         tmp = [eye(3,3),-r_B_F2;zeros(3,3),eye(3,3)];
@@ -260,7 +257,7 @@ for sample = 1 : number_of_samples
         d_theta = [d_theta_leg_1' d_theta_leg_2'  d_theta_arm_1' d_theta_arm_2'];
 
 
-        r_B_G = [0 0 0]';              % vector waist to CoM
+        r_B_G = [0 0 0]';                       % vector waist to CoM
 
         A = [ M*I3 , -M*hat(r_B_G) , M_d_theta ;
                   zeros(3,3) , I_tilde , H_d_theta ];
@@ -268,15 +265,15 @@ for sample = 1 : number_of_samples
         B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
 
         PL = A * B;
-        P = PL(1:3);                    % linear momentum
-        L = PL(4:6);                    % angular momentum
+        P = PL(1:3);                            % linear momentum
+        L = PL(4:6);                            % angular momentum
 
         calcP(1);
         calcL(1);
     
-        dL = (L - L_prev) / period;     % finite difference method
+        dL = (L - L_prev) / period;             % finite difference method
 
-        L_prev = L;                     % save previous value for next step
+        L_prev = L;                             % save previous value for next step
 
 
 
@@ -323,9 +320,9 @@ for sample = 1 : number_of_samples
         tau_C_x = 0;
         tau_C_y = 0;
         K = length(epsilon);
-        C =   zeros(length(Data), 3);     % contact point x, y, z 
-        x_G = zeros(length(Data), 3);     % for x_G, \dot x_G, \ddot x_G
-        y_G = zeros(length(Data), 3);     % for y_G, \dot y_G, \ddot y_G
+        C =   zeros(length(Data), 3);           % contact point x, y, z 
+        x_G = zeros(length(Data), 3);           % for x_G, \dot x_G, \ddot x_G
+        y_G = zeros(length(Data), 3);           % for y_G, \dot y_G, \ddot y_G
 
 
         % Torques
