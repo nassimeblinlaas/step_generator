@@ -100,7 +100,7 @@ uLINK = loadHRPdata('HRP2main_full.wrl');
 
 fprintf('Reading ./morisawa.csv\n')
 Whole_data = csvread('./morisawa.csv');
-Data = Whole_data(1:50, :);
+Data = Whole_data(1:40, :);     % ERR : quand je prends moins de 39 indices la boucle build contact data plante, pourquoi ?
 given_xi_B = zeros(size(Data), 6);
 res_xi_B = zeros(size(Data), 6);
 halfsitting = load('./halfsitting.dat');
@@ -108,9 +108,9 @@ fprintf('Reading done\n')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Build contact points data
-is_contact = zeros( length(Data) , 2);
+is_contact = zeros(length(Data) , 2);
 contact_coord = zeros(length(Data), 4);
-normal_vectors = zeros(length(Data), 3 * 2);    % three scalars for vector foreach two contact points
+normal_vectors = zeros(length(Data), 3 * 2);    % three scalars per vector foreach two contact points
 
 for i = 1:length(Data)
     if Data(i, 13) == 0
@@ -152,7 +152,7 @@ end
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for sample = 1 : length(Data)
-    sample = sample             % for debug usage
+    sample = sample;             % for debug usage
     
     
 
@@ -162,7 +162,7 @@ for sample = 1 : length(Data)
     % Step 1 : give waist linear and angular speed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    v_ref_B   = [ Data(sample, 2); Data(sample, 3); 0];     % waist speed vector
+    v_ref_B   = [ Data(sample, 6); Data(sample, 7); 0];     % waist speed vector
     w_ref_B   = [ 0; 0; 0];
     v_ref_F_1 = [ Data(sample, 11); Data(sample, 12); Data(sample, 13)];
     v_ref_F_2 = [ Data(sample, 23); Data(sample, 24); Data(sample, 25)];
