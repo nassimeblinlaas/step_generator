@@ -140,37 +140,52 @@ end
 M = TotalMass(1);	% total robot mass
 
 uLINK(WAIST).p = [ 0 0 0.6487 ]' ;
-
+uLINK(WAIST).R = eye(3,3) ;
 for i = 2:length(uLINK)
     uLINK(i).q   = halfsitting(i-1) * pi/180;
     uLINK(i).dq  = 0.0 ;
     uLINK(i).ddq = 0.0 ;
 end
 
+ForwardKinematics(1);
 
+for i = 1:length(uLINK)
+    uLINK(i).v  = [0.0 ; 0.0 ; 0.0 ] ;
+    uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
+end
+
+ForwardVelocity(1);
+
+CoM_init = calcCoM()
+r_bc = uLINK(WAIST).p - CoM_init  %vector from CoM to Base Link origin
+
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for sample = 1 : length(Data)
     sample = sample;             % for debug usage
     
-    
-
     ForwardKinematics(1);
-
+    ForwardVelocity(1);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 1 : give waist linear and angular speed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    v_ref_B   = [ Data(sample, 6); Data(sample, 7); 0];     % waist speed vector
+    v_CoM = [ Data(sample, 6) , Data(sample, 7), 0];
+    
     w_ref_B   = [ 0; 0; 0];
+    v_ref_B   = v_CoM + cross(r_bc,w_ref_B) ;     % waist speed vector
+    
     v_ref_F_1 = [ Data(sample, 11); Data(sample, 12); Data(sample, 13)];
-    v_ref_F_2 = [ Data(sample, 23); Data(sample, 24); Data(sample, 25)];
     w_ref_F_1 = [ 0; 0; 0];
+    
+    v_ref_F_2 = [ Data(sample, 23); Data(sample, 24); Data(sample, 25)];
     w_ref_F_2 = [ 0; 0; 0];
-    v_ref_H_1 = [ 0; 0; 0];
-    v_ref_H_2 = [ 0; 0; 0];
+    
+    v_ref_H_1 = [0 ; 0 ; 0];
     w_ref_H_1 = [ 0; 0; 0];
+    
+    v_ref_H_2 = [0 ; 0 ; 0];
     w_ref_H_2 = [ 0; 0; 0];
     
     %[0.1 ; 0.1 ; 0.1];
@@ -253,9 +268,12 @@ for sample = 1 : length(Data)
         B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
 
         PL = A * B;
-        P = PL(1:3);                    % linear momentum
-        L = PL(4:6);                    % angular momentum
+        P = PL(1:3)                    % linear momentum
+        L = PL(4:6)                    % angular momentum
 
+        calcP(1)
+        calcL(1)
+    
         dL = (L - L_prev) / period;     % finite difference method
 
         L_prev = L;                     % save previous value for next step
