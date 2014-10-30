@@ -100,7 +100,7 @@ uLINK = loadHRPdata('HRP2main_full.wrl');
 
 fprintf('Reading ./morisawa.csv\n')
 Whole_data = csvread('./morisawa.csv');
-Data = Whole_data(1:40, :);     % ERR : quand je prends moins de 39 indices la boucle build contact data plante, pourquoi ?
+Data = Whole_data(1:40, :);     % ERR : quand je prends moins de 39 indices la boucle build contact points data plante, pourquoi ?
 given_xi_B = zeros(size(Data), 6);
 res_xi_B = zeros(size(Data), 6);
 halfsitting = load('./halfsitting.dat');
