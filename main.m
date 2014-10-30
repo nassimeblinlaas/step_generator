@@ -238,7 +238,7 @@ while ( iteration < 10 )
     % Step 3
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    route = FindRoute(17);    % head
+    route = FindRoute(HEAD_JOINT1);    % head
     route_head = route(3:4);
     route_leg_1 = FindRoute(RLEG_JOINT5);    % Rleg
     route_leg_2 = FindRoute(RLEG_JOINT5);    % Lleg
@@ -247,24 +247,70 @@ while ( iteration < 10 )
     route = FindRoute(LARM_JOINT6);    % Larm
     route_arm_2 = route(3:end);
     
+    [M_leg_1, H_leg_1, I_tilde_leg_1, m_tilde_leg_1, c_tilde_leg_1] = MH(route_leg_1);     % call MH subroutine
+    [M_leg_2, H_leg_2, I_tilde_leg_2, m_tilde_leg_2, c_tilde_leg_2] = MH(route_leg_2);
+    [M_arm_1, H_arm_1, I_tilde_arm_1, m_tilde_arm_1, c_tilde_arm_1] = MH(route_arm_1);   
+    [M_arm_2, H_arm_2, I_tilde_arm_2, m_tilde_arm_2, c_tilde_arm_2] = MH(route_arm_2);
+    [M_head, H_head, I_tilde_head, m_tilde_head, c_tilde_head] = MH(route_head);
     
     
     
-    [M_leg_1, H_leg_1, I_tilde_leg_1, m_tilde_leg_1, c_tilde_leg_1] = MH(RLEG_JOINT5);     % call MH subroutine
-    [M_leg_2, H_leg_2, I_tilde_leg_2, m_tilde_leg_2, c_tilde_leg_2] = MH(LLEG_JOINT5);
-    [M_arm_1, H_arm_1, I_tilde_arm_1, m_tilde_arm_1, c_tilde_arm_1] = MH(RARM_JOINT5);   
-    [M_arm_2, H_arm_2, I_tilde_arm_2, m_tilde_arm_2, c_tilde_arm_2] = MH(LARM_JOINT5);
-    [M_arm_2, H_arm_2, I_tilde_arm_2, m_tilde_arm_2, c_tilde_arm_2] = MH(LARM_JOINT5);
+    % Chest Inertia Matrices
+    m_tilde_chest_1 = m_tilde_arm_1 + m_tilde_arm_2 + m_tilde_head + uLINK(CHEST_JOINT1).m;
+    c_tilde_chest_1 = (m_tilde_arm_1*c_tilde_arm_1 + m_tilde_arm_2*c_tilde_arm_2 + m_tilde_head*c_tilde_head + ...
+        uLINK(CHEST_JOINT1).m * uLINK(CHEST_JOINT1).c) / m_tilde_chest_1 ;
+    m_tilde_chest_0 = m_tilde_chest_1 + uLINK(CHEST_JOINT0).m;
+    c_tilde_chest_0 = (m_tilde_chest_1*c_tilde_chest_1 + ...
+        uLINK(CHEST_JOINT0).m * uLINK(CHEST_JOINT0).c) / m_tilde_chest_0 ;
     
+    I_tilde_chest_1 = ...
+        I_tilde_arm_1 + m_tilde_arm_1 * D(c_tilde_arm_1 - c_tilde_chest_1) + ...
+        I_tilde_arm_2 + m_tilde_arm_2 * D(c_tilde_arm_2 - c_tilde_chest_1) + ...
+        I_tilde_head + m_tilde_head   * D(c_tilde_head -  c_tilde_chest_1) + ...
+        uLINK(CHEST_JOINT1).R * uLINK(CHEST_JOINT1).I * uLINK(CHEST_JOINT1).R' + ...
+            uLINK(CHEST_JOINT1).m * D(uLINK(CHEST_JOINT1).c - c_tilde_chest_1);
 
-    d_theta = [d_theta_leg_1' d_theta_leg_2' d_theta_arm_1' d_theta_arm_2'];
+    I_tilde_chest_0 = ...
+        I_tilde_chest_1 + ...
+        m_tilde_chest_1 * D(c_tilde_chest_1 - c_tilde_chest_0) + ...
+        uLINK(CHEST_JOINT0).R * uLINK(CHEST_JOINT0).I * uLINK(CHEST_JOINT0).R' + ...
+        uLINK(CHEST_JOINT0).m * D(uLINK(CHEST_JOINT0).c - c_tilde_chest_0);
+    
+    M_chest(2) = cross(uLINK(CHEST_JOINT1).a , (c_tilde_chest_1 - uLINK(CHEST_JOINT1).p))*m_tilde_chest_1 ;
+    M_chest(1) = cross(uLINK(CHEST_JOINT0).a , (c_tilde_chest_0 - uLINK(CHEST_JOINT0).p))*m_tilde_chest_0 ;
+    H_zero_chest(2) = cross(c_tilde_chest_1 , uLINK(CHEST_JOINT1).m) + I_tilde_chest_1 * uLINK(CHEST_JOINT1).a ;     % (19)
+    H_zero_chest(1) = cross(c_tilde_chest_0 , uLINK(CHEST_JOINT0).m) + I_tilde_chest_0 * uLINK(CHEST_JOINT0).a ;     % (19)
+    H_chest = H_zero_chest - hat(I_tilde_chest_0) * M_chest;
+    
+    
+    
+    % Waist Inertia Matrices
+    m_tilde_waist = m_tilde_leg_1 + m_tilde_leg_2 + m_tilde_chest_0 + uLINK(WAIST).m;
+    c_tilde_waist = (m_tilde_leg_1*c_tilde_leg_1 + m_tilde_leg_2*c_tilde_leg_2 + m_tilde_chest_0*c_tilde_chest_0 + ...
+        uLINK(WAIST).m * uLINK(WAIST).c) / m_tilde_waist ;
+
+    I_tilde_waist = ...
+        I_tilde_leg_1   + m_tilde_leg_1   * D(c_tilde_leg_1 - c_tilde_waist) + ...
+        I_tilde_leg_2   + m_tilde_leg_2   * D(c_tilde_leg_2 - c_tilde_waist) + ...
+        I_tilde_chest_0 + m_tilde_chest_0 * D(c_tilde_chest_0 - c_tilde_waist) + ...
+        uLINK(WAIST).R * uLINK(WAIST).I * uLINK(WAIST).R' + ...
+            uLINK(WAIST).m * D(uLINK(WAIST).c - c_tilde_waist);
+    
+    M_waist = cross(uLINK(WAIST).a , (c_tilde_waist - uLINK(WAIST).p))*m_tilde_waist ;
+    H_zero_waist = cross(c_tilde_waist , uLINK(WAIST).m) + I_tilde_waist * uLINK(WAIST).a ;     % (19)
+    H_waist = H_zero_chest - hat(I_tilde_waist) * M_chest;
+    
+    
+    
+    % put everything together
+    d_theta = [d_theta_leg_1' d_theta_leg_2'  d_theta_arm_1' d_theta_arm_2'];
     M_d_theta = [M_leg_1, M_leg_2, M_arm_1, M_arm_2];
     H_d_theta = [H_leg_1, H_leg_2, H_arm_1, H_arm_2];
 
     r_B_G = 0;              % vector waist to CoM
 
 
-    I_tilde = I_tilde_arm_1 + I_tilde_arm_2 + I_tilde_leg_1 + I_tilde_leg_2;
+    I_tilde = I_tilde_waist ;
 
 
 
