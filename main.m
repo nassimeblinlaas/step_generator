@@ -16,7 +16,7 @@ clear ;
 
 global uLINK G
 G = 9.81 ;
-
+number_of_samples = 10; % size of data to treat
 
 
 MG = 9.81 ;
@@ -100,7 +100,7 @@ uLINK = loadHRPdata('HRP2main_full.wrl');
 
 fprintf('Reading ./morisawa.csv\n')
 Whole_data = csvread('./morisawa.csv');
-Data = Whole_data(1:40, :);     % ERR : quand je prends moins de 39 indices la boucle build contact points data plante, pourquoi ?
+Data = Whole_data(1:number_of_samples, :);     % ERR : quand je prends moins de 39 indices la boucle build contact points data plante, pourquoi ?
 given_xi_B = zeros(size(Data), 6);
 res_xi_B = zeros(size(Data), 6);
 halfsitting = load('./halfsitting.dat');
@@ -112,7 +112,11 @@ is_contact = zeros(length(Data) , 2);
 contact_coord = zeros(length(Data), 4);
 normal_vectors = zeros(length(Data), 3 * 2);    % three scalars per vector foreach two contact points
 
-for i = 1:length(Data)
+length(Data)
+
+for i = 1:number_of_samples
+    i
+    
     if Data(i, 13) == 0
        is_contact(i, 1) = 1;
        contact_coord(i, 1) = Data(i, 11);       % coord x LF
@@ -156,14 +160,14 @@ end
 
 ForwardVelocity(1);
 
-CoM_init = calcCoM()
-r_bc = uLINK(WAIST).p - CoM_init  %vector from CoM to Base Link origin
+CoM_init = calcCoM();
+r_bc = uLINK(WAIST).p - CoM_init;  %vector from CoM to Base Link origin
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for sample = 1 : length(Data)
+for sample = 1 : number_of_samples
     sample = sample;             % for debug usage
     
     ForwardKinematics(1);
@@ -268,11 +272,11 @@ for sample = 1 : length(Data)
         B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
 
         PL = A * B;
-        P = PL(1:3)                    % linear momentum
-        L = PL(4:6)                    % angular momentum
+        P = PL(1:3);                    % linear momentum
+        L = PL(4:6);                    % angular momentum
 
-        calcP(1)
-        calcL(1)
+        calcP(1);
+        calcL(1);
     
         dL = (L - L_prev) / period;     % finite difference method
 
