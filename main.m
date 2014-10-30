@@ -1,7 +1,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Hirukawa multicontact step generator 2007
 %
-% Implémenté par Nassime BLIN 2014 pour Gepetto LAAS - CNRS
+% Implémenté par Nassime BLIN et Maximilien Naveau 2014
+% pour Gepetto LAAS - CNRS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 close all ;
@@ -17,7 +18,7 @@ clear ;
 global uLINK G
 G = 9.81 ;
 
-number_of_samples = 10; % size of data to treat
+number_of_samples = 50; % size of data to treat
 pZ = 0.6487;            % position Z of robot constant
 period = 0.005;         % sampling period in seconds
 
@@ -161,7 +162,7 @@ r_bc = uLINK(WAIST).p - CoM_init;               % vector from CoM to Base Link o
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for sample = 1 : number_of_samples
-    sample = sample;                            % for debug usage
+    sample = sample                            % for debug usage
     
     ForwardKinematics(1);
     ForwardVelocity(1);
@@ -464,8 +465,8 @@ for sample = 1 : number_of_samples
 
     end
     
-    given_xi_B(sample, :) = xi_B_ref;
-    res_xi_B(sample, :) = xi_B;
+    res_xi_B(sample, :) = xi_B_ref;
+    given_xi_B(sample, :) = xi_B;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 10 : find angular speeds having new linear and angular speed of B
@@ -509,10 +510,17 @@ end
 
 
 
+%hold on
+%plot(res_xi_B(:, 1),res_xi_B(:, 2), 'r')
+%plot(res_xi_B(:, 2), 'b')
+%plot(x_G(:, 1), 'r')
+%plot(y_G(:, 2), 'b')
 
-plot(res_xi_B(:, 1), 'r')
-hold on
-plot(given_xi_B(:, 1), 'b')
+%figure
+%hold on
+%plot(Whole_data(1:number_of_samples, 2), 'r')
+%plot(Whole_data(1:number_of_samples, 3), 'b')
+%plot(given_xi_B(:, 1), 'b')
 
 
 

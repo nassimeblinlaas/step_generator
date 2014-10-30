@@ -5,7 +5,8 @@
 % Algorithme issu de "Resolved Momentum Control: Humanoid Motion Planning
 % based on the Linear and Angular Momentum" par KAJITA 2003.
 %
-% Implémenté par Nassime BLIN 2014 pour Gepetto LAAS - CNRS
+% Implémenté par Nassime BLIN et Maximilien Naveau 2014
+% pour Gepetto LAAS - CNRS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
