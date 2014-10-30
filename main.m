@@ -134,27 +134,15 @@ sample = sample + 1
 
 M = TotalMass(1);	% total robot mass
 
-uLINK(WAIST).p = ...
-    [Data(sample + 1, 1), Data(sample + 1, 2), Data(sample + 1, 3)]' ;        % waist position
-theta = Data(sample, 5);                                        % yaw = lacet = 0
-uLINK(WAIST).R = [cos(theta),-sin(theta),0;...                  % waist rotation sin(theta),cos(theta),0;...
-                  sin(theta),cos(theta),0;...
-                  0,0,1 ];             
-              
-%uLINK(WAIST).v = ...
-%    [Data(sample,6), Data(sample,7), Data(sample,8)]';         % waist speed
-uLINK(WAIST).w = [0;0;0];                                       % waist angular speed
+uLINK(WAIST).p = [ 0 0 0.6487 ]' ;
 
-uLINK(RARM_JOINT5).p = uLINK(WAIST).p + [0.30;0;0];             % right arm position −30 cm
-uLINK(LARM_JOINT5).p = uLINK(WAIST).p - [0.30;0;0];             % left  arm position +30 cm
-uLINK(RLEG_JOINT5).p = ...
-    [Data(sample,11), Data(sample,12), Data(sample,13)]';       % right foot position
-uLINK(LLEG_JOINT5).p = ...
-    [Data(sample,23), Data(sample,24), Data(sample,25)]';       % left foot position
-
-for i = 1 : length(uLINK) - 1
-    uLINK(i).q   = halfsitting(i);
+for i = 2:length(uLINK)
+    uLINK(i).q   = halfsitting(i-1) * pi/180;
+    uLINK(i).dq  = 0.0 ;
+    uLINK(i).ddq = 0.0 ;
 end
+ForwardKinematics(1);
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
@@ -174,8 +162,8 @@ v_ref_F_1 = [ 0; 0; 0];
 v_ref_F_2 = [ 0; 0; 0];
 w_ref_F_1 = [ 0; 0; 0];
 w_ref_F_2 = [ 0; 0; 0];
-v_ref_H_1 = [ 0.1; 0; 0.1];
-v_ref_H_2 = [ 0.1; 0; 0.1];
+v_ref_H_1 = [ 0; 0; 0];
+v_ref_H_2 = [ 0; 0; 0];
 w_ref_H_1 = [ 0; 0; 0];
 w_ref_H_2 = [ 0; 0; 0];
 
@@ -205,37 +193,33 @@ while ( iteration < 2 )
     xi_H_2 = [ v_ref_H_2 ; w_ref_H_2 ];
 
     % leg 1
-    temp = eye(6,6);
-    temp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
+    tmp = [eye(3,3),-r_B_F1;zeros(3,3),eye(3,3)];
     route = FindRoute(RLEG_JOINT5);
     J_leg_1 = CalcJacobian(route);
-    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ temp * xi_B;  % angular speed    
+    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B  % angular speed    
     
     % leg 2
-    temp = eye(6,6);
-    temp(1:3,4:6) = -r_B_F2;
+    tmp = [eye(3,3),-r_B_F2;zeros(3,3),eye(3,3)];
     route = FindRoute(LLEG_JOINT5);
     J_leg_2 = CalcJacobian(route);
-    d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ temp * xi_B;
+    d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B
     
     % arm 1
-    temp = eye(6,6);
-    temp(1:3,4:6) = -r_B_H1;
+    tmp = [eye(3,3),-r_B_H1;zeros(3,3),eye(3,3)];
     route = FindRoute(RARM_JOINT5);
     route = route(3:end);
     J_arm_1 = CalcJacobian(route);
-    d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
+    d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B
 
     % arm 2
-    temp = eye(6,6);
-    temp(1:3,4:6) = -r_B_H2;
+    tmp = [eye(3,3),-r_B_H2;zeros(3,3),eye(3,3)];
     route = FindRoute(LARM_JOINT5);
     route = route(3:end);
     J_arm_2 = CalcJacobian(route);
-    d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
+    d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B
 
 
-
+%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 3
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -454,32 +438,32 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
  % leg 1
-temp = eye(6,6);
-temp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
+tmp = eye(6,6);
+tmp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
 route = FindRoute(RLEG_JOINT5);
 J_leg_1 = CalcJacobian(route);
-d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ temp * xi_B;  % angular speeds
+d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;  % angular speeds
 
 % leg 2
-temp = eye(6,6);
-temp(1:3,4:6) = -r_B_F2;
+tmp = eye(6,6);
+tmp(1:3,4:6) = -r_B_F2;
 route = FindRoute(LLEG_JOINT5);
 J_leg_2 = CalcJacobian(route);
-d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ temp * xi_B;
+d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B;
 
 % arm 1
-temp = eye(6,6);
-temp(1:3,4:6) = -r_B_H1;
+tmp = eye(6,6);
+tmp(1:3,4:6) = -r_B_H1;
 route = FindRoute(RARM_JOINT5);
 J_arm_1 = CalcJacobian(route(:,3:end));
-d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
+d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B;
 
 % arm 2
-temp = eye(6,6);
-temp(1:3,4:6) = -r_B_H2;
+tmp = eye(6,6);
+tmp(1:3,4:6) = -r_B_H2;
 route = FindRoute(LARM_JOINT5);
 J_arm_2 = CalcJacobian(route(:,3:end));
-d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
+d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
 
 
 
