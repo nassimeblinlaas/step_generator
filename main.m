@@ -157,7 +157,7 @@ end
 ForwardVelocity(1);
 
 CoM_init = calcCoM()
-bXc = uLINK(WAIST).p - CoM_init 
+r_bc = uLINK(WAIST).p - CoM_init  %vector from CoM to Base Link origin
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -166,21 +166,20 @@ bXc = uLINK(WAIST).p - CoM_init
 for sample = 1 : length(Data)
     sample = sample             % for debug usage
     
-    
-
     ForwardKinematics(1);
     ForwardVelocity(1);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 1 : give waist linear and angular speed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    v_CoM = [ Data(sample, 2); Data(sample, 3); 0];
     
-    v_ref_B   = [ Data(sample, 2); Data(sample, 3); 0];     % waist speed vector
     w_ref_B   = [ 0; 0; 0];
+    v_ref_B   = v_CoM + cross(r_bc,w_ref_B) ;     % waist speed vector
     
-    v_ref_F_1 = [ 0; 0; 0];
+    v_ref_F_1 = [ Data(sample, 11); Data(sample, 12); Data(sample, 13)];
     w_ref_F_1 = [ 0; 0; 0];
     
-    v_ref_F_2 = [ 0; 0; 0];
+    v_ref_F_2 = [ Data(sample, 23); Data(sample, 24); Data(sample, 25)];
     w_ref_F_2 = [ 0; 0; 0];
     
     v_ref_H_1 = [0 ; 0 ; 0];
@@ -514,9 +513,9 @@ end
 
 
 
-plot(res_xi_B(1), 'r')
+plot(res_xi_B(:, 1), 'r')
 hold on
-plot(given_xi_B(1), 'b')
+plot(given_xi_B(:, 1), 'b')
 
 
 
