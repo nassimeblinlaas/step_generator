@@ -214,10 +214,24 @@ while ( iteration < 10 )
     % Step 3
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    [M_leg_1, H_leg_1, I_tilde_leg_1] = MH(RLEG_JOINT5);     % call MH subroutine
-    [M_leg_2, H_leg_2, I_tilde_leg_2] = MH(LLEG_JOINT5);
-    [M_arm_1, H_arm_1, I_tilde_arm_1] = MH(RARM_JOINT5);   
-    [M_arm_2, H_arm_2, I_tilde_arm_2] = MH(LARM_JOINT5);
+    route = FindRoute(17);    % head
+    route_head = route(3:4);
+    route_leg_1 = FindRoute(RLEG_JOINT5);    % Rleg
+    route_leg_2 = FindRoute(RLEG_JOINT5);    % Lleg
+    route = FindRoute(RARM_JOINT6);    % Rarm
+    route_arm_1 = route(3:end);
+    route = FindRoute(LARM_JOINT6);    % Larm
+    route_arm_2 = route(3:end);
+    
+    
+    
+    
+    [M_leg_1, H_leg_1, I_tilde_leg_1, m_tilde_leg_1, c_tilde_leg_1] = MH(RLEG_JOINT5);     % call MH subroutine
+    [M_leg_2, H_leg_2, I_tilde_leg_2, m_tilde_leg_2, c_tilde_leg_2] = MH(LLEG_JOINT5);
+    [M_arm_1, H_arm_1, I_tilde_arm_1, m_tilde_arm_1, c_tilde_arm_1] = MH(RARM_JOINT5);   
+    [M_arm_2, H_arm_2, I_tilde_arm_2, m_tilde_arm_2, c_tilde_arm_2] = MH(LARM_JOINT5);
+    [M_arm_2, H_arm_2, I_tilde_arm_2, m_tilde_arm_2, c_tilde_arm_2] = MH(LARM_JOINT5);
+    
 
     d_theta = [d_theta_leg_1' d_theta_leg_2' d_theta_arm_1' d_theta_arm_2'];
     M_d_theta = [M_leg_1, M_leg_2, M_arm_1, M_arm_2];

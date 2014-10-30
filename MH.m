@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calcule les matrices d'inertie linéraire et angulaire pour chaque joint à
-% partir de l'extrémité fournie en argument.
+% partir de la chaîne cinématique fournie en argument.
 %
 % Algorithme issu de "Resolved Momentum Control: Humanoid Motion Planning
 % based on the Linear and Angular Momentum" par KAJITA 2003.
@@ -9,16 +9,23 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-function [M_theta, H_theta, I_tilde_j] = MH(joint)
+function [M_theta, H_theta, I_tilde_j, m_tilde_j, c_tilde_j] = MH(route)
     global uLINK
-
-    route = FindRoute(joint);
     
-    m_tilde_j = uLINK(route(length(route))).m;
-    c_tilde_j = uLINK(route(length(route))).c;
-    I_tilde_j = uLINK(route(length(route))).I;    
     
-    for ii = length(route): - 1 : 1
+    
+    m_tilde_j = uLINK(route(end)).m;
+    c_tilde_j = uLINK(route(end)).c;
+    I_tilde_j = uLINK(route(end)).I; 
+    a_j     = uLINK(route(end)).a;
+    r_j     = uLINK(route(end)).p;
+    
+    length(route);
+    
+    M_theta(:, 1) = cross(a_j , (c_tilde_j - r_j) * m_tilde_j);             % (18)
+    H_theta_zero(:, 1) = cross(c_tilde_j , M_theta(:, 1)) + I_tilde_j * a_j;     % (19)
+    
+    for ii = length(route): - 1 : 2
         
         j = route(ii);
         j_1 = route(ii-1);
@@ -40,13 +47,11 @@ function [M_theta, H_theta, I_tilde_j] = MH(joint)
             m_j_1 * D(c_j_1 - c_tilde_j_1);                                           % (25)
 
 
-
-
         m_j = cross(a_j , (c_tilde_j - r_j) * m_tilde_j);   % (18)
         h_j = cross(c_tilde_j , m_j) + I_tilde_j * a_j;     % (19)
         
-        M_theta(:,i) = m_j;
-        H_theta_zero(:,i) = h_j;
+        M_theta(:, ii) = m_j;
+        H_theta_zero(:, ii) = h_j;
         
         
         % save previous result
@@ -57,6 +62,7 @@ function [M_theta, H_theta, I_tilde_j] = MH(joint)
         
     end
 
+    
     H_theta = H_theta_zero - hat(c_tilde_j) * M_theta;
     
 end
