@@ -108,7 +108,8 @@ fprintf('Reading done\n')
 % Build contact points data
 is_contact = zeros(length(Data) , 2);
 contact_coord = zeros(length(Data), 4);
-normal_vectors = zeros(length(Data), 3 * 2);    % three scalars per vector foreach two contact points
+% three scalars per vector foreach two contact points
+normal_vectors = zeros(length(Data), 3 * 2);    
 
 for i = 1:number_of_samples
     if Data(i, 13) == 0
@@ -155,7 +156,7 @@ end
 ForwardVelocity(1);
 
 CoM_init = calcCoM();
-r_bc = uLINK(WAIST).p - CoM_init;               % vector from CoM to Base Link origin
+r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
