@@ -24,37 +24,37 @@ pZ = 0.6487;            % position Z of robot constant
 
 period = 0.005;         % sampling period in seconds
 
-WAIST = 1         %labels
-RLEG_JOINT0 = 2   %
-RLEG_JOINT1 = 3   %
-RLEG_JOINT2 = 4   %
-RLEG_JOINT3 = 5   %
-RLEG_JOINT4 = 6   %
-RLEG_JOINT5 = 7   %
-LLEG_JOINT0 = 8   %
-LLEG_JOINT1 = 9   %
-LLEG_JOINT2 = 10  %
-LLEG_JOINT3 = 11  %
-LLEG_JOINT4 = 12  %
-LLEG_JOINT5 = 13  %
-CHEST_JOINT0 = 14 %
-CHEST_JOINT1 = 15 %
-HEAD_JOINT0 = 16  %
-HEAD_JOINT1 = 17  %
-RARM_JOINT0 = 18  %
-RARM_JOINT1 = 19  %
-RARM_JOINT2 = 20  %
-RARM_JOINT3 = 21  %
-RARM_JOINT4 = 22  %
-RARM_JOINT5 = 23  %
-RARM_JOINT6 = 24  %
-LARM_JOINT0 = 25  %
-LARM_JOINT1 = 26  %
-LARM_JOINT2 = 27  %
-LARM_JOINT3 = 28  %
-LARM_JOINT4 = 29  %
-LARM_JOINT5 = 30  %
-LARM_JOINT6 = 31  %
+WAIST = 1;         %labels
+RLEG_JOINT0 = 2;   %
+RLEG_JOINT1 = 3;   %
+RLEG_JOINT2 = 4;   %
+RLEG_JOINT3 = 5;   %
+RLEG_JOINT4 = 6;   %
+RLEG_JOINT5 = 7;   %
+LLEG_JOINT0 = 8;   %
+LLEG_JOINT1 = 9;   %
+LLEG_JOINT2 = 10;  %
+LLEG_JOINT3 = 11;  %
+LLEG_JOINT4 = 12;  %
+LLEG_JOINT5 = 13;  %
+CHEST_JOINT0 = 14; %
+CHEST_JOINT1 = 15; %
+HEAD_JOINT0 = 16;  %
+HEAD_JOINT1 = 17;  %
+RARM_JOINT0 = 18;  %
+RARM_JOINT1 = 19;  %
+RARM_JOINT2 = 20;  %
+RARM_JOINT3 = 21;  %
+RARM_JOINT4 = 22;  %
+RARM_JOINT5 = 23;  %
+RARM_JOINT6 = 24;  %
+LARM_JOINT0 = 25;  %
+LARM_JOINT1 = 26;  %
+LARM_JOINT2 = 27;  %
+LARM_JOINT3 = 28;  %
+LARM_JOINT4 = 29;  %
+LARM_JOINT5 = 30;  %
+LARM_JOINT6 = 31;  %
 
 v_ref_B  = zeros(3,1);  % waist linear speed
 v_ref_F_1 = zeros(3,1);
@@ -185,7 +185,7 @@ converge    = 0;
 
 
 %while ( converge == 0 )
-while ( iteration < 10 )
+while ( iteration < 2 )
     iteration = iteration + 1;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -209,19 +209,20 @@ while ( iteration < 10 )
     temp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
     route = FindRoute(RLEG_JOINT5);
     J_leg_1 = CalcJacobian(route);
-    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ temp * xi_B;  % angular speeds
-
+    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ temp * xi_B;  % angular speed    
+    
     % leg 2
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_F2;
     route = FindRoute(LLEG_JOINT5);
     J_leg_2 = CalcJacobian(route);
     d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ temp * xi_B;
-
+    
     % arm 1
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_H1;
     route = FindRoute(RARM_JOINT5);
+    route = route(3:end);
     J_arm_1 = CalcJacobian(route);
     d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
 
@@ -229,6 +230,7 @@ while ( iteration < 10 )
     temp = eye(6,6);
     temp(1:3,4:6) = -r_B_H2;
     route = FindRoute(LARM_JOINT5);
+    route = route(3:end);
     J_arm_2 = CalcJacobian(route);
     d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
 
@@ -238,99 +240,22 @@ while ( iteration < 10 )
     % Step 3
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    route = FindRoute(HEAD_JOINT1);    % head
-    route_head = route(3:4);
-    route_leg_1 = FindRoute(RLEG_JOINT5);    % Rleg
-    route_leg_2 = FindRoute(RLEG_JOINT5);    % Lleg
-    route = FindRoute(RARM_JOINT6);    % Rarm
-    route_arm_1 = route(3:end);
-    route = FindRoute(LARM_JOINT6);    % Larm
-    route_arm_2 = route(3:end);
     
-    [M_leg_1, H_leg_1, I_tilde_leg_1, m_tilde_leg_1, c_tilde_leg_1] = MH(route_leg_1);     % call MH subroutine
-    [M_leg_2, H_leg_2, I_tilde_leg_2, m_tilde_leg_2, c_tilde_leg_2] = MH(route_leg_2);
-    [M_arm_1, H_arm_1, I_tilde_arm_1, m_tilde_arm_1, c_tilde_arm_1] = MH(route_arm_1);   
-    [M_arm_2, H_arm_2, I_tilde_arm_2, m_tilde_arm_2, c_tilde_arm_2] = MH(route_arm_2);
-    [M_head, H_head, I_tilde_head, m_tilde_head, c_tilde_head] = MH(route_head);
-    
-    
-    
-    % Chest Inertia Matrices
-    m_tilde_chest_1 = m_tilde_arm_1 + m_tilde_arm_2 + m_tilde_head + uLINK(CHEST_JOINT1).m;
-    c_tilde_chest_1 = (m_tilde_arm_1*c_tilde_arm_1 + m_tilde_arm_2*c_tilde_arm_2 + m_tilde_head*c_tilde_head + ...
-        uLINK(CHEST_JOINT1).m * uLINK(CHEST_JOINT1).c) / m_tilde_chest_1 ;
-    m_tilde_chest_0 = m_tilde_chest_1 + uLINK(CHEST_JOINT0).m;
-    c_tilde_chest_0 = (m_tilde_chest_1*c_tilde_chest_1 + ...
-        uLINK(CHEST_JOINT0).m * uLINK(CHEST_JOINT0).c) / m_tilde_chest_0 ;
-    
-    I_tilde_chest_1 = ...
-        I_tilde_arm_1 + m_tilde_arm_1 * D(c_tilde_arm_1 - c_tilde_chest_1) + ...
-        I_tilde_arm_2 + m_tilde_arm_2 * D(c_tilde_arm_2 - c_tilde_chest_1) + ...
-        I_tilde_head + m_tilde_head   * D(c_tilde_head -  c_tilde_chest_1) + ...
-        uLINK(CHEST_JOINT1).R * uLINK(CHEST_JOINT1).I * uLINK(CHEST_JOINT1).R' + ...
-            uLINK(CHEST_JOINT1).m * D(uLINK(CHEST_JOINT1).c - c_tilde_chest_1);
-
-    I_tilde_chest_0 = ...
-        I_tilde_chest_1 + ...
-        m_tilde_chest_1 * D(c_tilde_chest_1 - c_tilde_chest_0) + ...
-        uLINK(CHEST_JOINT0).R * uLINK(CHEST_JOINT0).I * uLINK(CHEST_JOINT0).R' + ...
-        uLINK(CHEST_JOINT0).m * D(uLINK(CHEST_JOINT0).c - c_tilde_chest_0);
-    
-    M_chest(2) = cross(uLINK(CHEST_JOINT1).a , (c_tilde_chest_1 - uLINK(CHEST_JOINT1).p))*m_tilde_chest_1 ;
-    M_chest(1) = cross(uLINK(CHEST_JOINT0).a , (c_tilde_chest_0 - uLINK(CHEST_JOINT0).p))*m_tilde_chest_0 ;
-    H_zero_chest(2) = cross(c_tilde_chest_1 , uLINK(CHEST_JOINT1).m) + I_tilde_chest_1 * uLINK(CHEST_JOINT1).a ;     % (19)
-    H_zero_chest(1) = cross(c_tilde_chest_0 , uLINK(CHEST_JOINT0).m) + I_tilde_chest_0 * uLINK(CHEST_JOINT0).a ;     % (19)
-    H_chest = H_zero_chest - hat(I_tilde_chest_0) * M_chest;
-    
-    
-    
-    % Waist Inertia Matrices
-    m_tilde_waist = m_tilde_leg_1 + m_tilde_leg_2 + m_tilde_chest_0 + uLINK(WAIST).m;
-    c_tilde_waist = (m_tilde_leg_1*c_tilde_leg_1 + m_tilde_leg_2*c_tilde_leg_2 + m_tilde_chest_0*c_tilde_chest_0 + ...
-        uLINK(WAIST).m * uLINK(WAIST).c) / m_tilde_waist ;
-
-    I_tilde_waist = ...
-        I_tilde_leg_1   + m_tilde_leg_1   * D(c_tilde_leg_1 - c_tilde_waist) + ...
-        I_tilde_leg_2   + m_tilde_leg_2   * D(c_tilde_leg_2 - c_tilde_waist) + ...
-        I_tilde_chest_0 + m_tilde_chest_0 * D(c_tilde_chest_0 - c_tilde_waist) + ...
-        uLINK(WAIST).R * uLINK(WAIST).I * uLINK(WAIST).R' + ...
-            uLINK(WAIST).m * D(uLINK(WAIST).c - c_tilde_waist);
-    
-    M_waist = cross(uLINK(WAIST).a , (c_tilde_waist - uLINK(WAIST).p))*m_tilde_waist ;
-    H_zero_waist = cross(c_tilde_waist , uLINK(WAIST).m) + I_tilde_waist * uLINK(WAIST).a ;     % (19)
-    H_waist = H_zero_chest - hat(I_tilde_waist) * M_chest;
-    
-    
-    
-    % put everything together
+    [ M_d_theta, H_d_theta, I_tilde, M_leg_1, M_leg_2, ...
+            M_arm_1, M_arm_2, H_leg_1, H_leg_2, H_arm_1, H_arm_2 ] = MH();
     d_theta = [d_theta_leg_1' d_theta_leg_2'  d_theta_arm_1' d_theta_arm_2'];
-    M_d_theta = [M_leg_1, M_leg_2, M_arm_1, M_arm_2];
-    H_d_theta = [H_leg_1, H_leg_2, H_arm_1, H_arm_2];
-
-    r_B_G = 0;              % vector waist to CoM
-
-
-    I_tilde = I_tilde_waist ;
-
-
-
-    temp0 = zeros(6, 30);       
-    temp0(1:3,1:3) = M*I3;
-    temp0(1:3,4:6) = -M*r_B_G;
-    temp0(4:6,4:6) = I_tilde;
-    temp0(1:3,7:end) = M_d_theta;
-    temp0(4:6,7:end) = H_d_theta;
-
-    B = zeros(30,1);       
-    B(1:3) = v_ref_B;
-    B(4:6) = w_ref_B;
-    B(7:end) = d_theta;
-
-    PL = temp0 * B;
+  
+    
+    r_B_G = [0 0 0]';              % vector waist to CoM
+    
+    A = [ M*I3 , -M*hat(r_B_G) , M_d_theta ;
+              zeros(3,3) , I_tilde , H_d_theta ];
+    
+    B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
+        
+    PL = A * B;
     P = PL(1:3);                    % linear momentum
     L = PL(4:6);                    % angular momentum
-
-
 
     dL = (L - L_prev) / period;     % finite difference method
 
@@ -471,8 +396,10 @@ while ( iteration < 10 )
     
     temp0 = zeros(6,6);
     temp0(1:3, 1:3) = M * I3;
-    temp0(1:3, 4:6) = -M * r_B_G;
+    temp0(1:3, 4:6) = -M * hat(r_B_G);
     temp0(4:6, 4:6) = I_tilde;
+    
+    
 
     temp1 = eye(6,6);
     temp1(1:3, 4:6) = -r_B_F1;
@@ -486,6 +413,8 @@ while ( iteration < 10 )
     temp4 = eye(6,6);
     temp4(1:3, 4:6) = -r_B_H2;
 
+    
+    %M_leg_1 = M_d_theta()
 
     A = temp0 ...
         - ([M_leg_1 ; H_leg_1] * J_leg_1\ temp1 + [M_leg_1 ; H_leg_1] * J_leg_2\ temp2) ...
@@ -511,8 +440,8 @@ while ( iteration < 10 )
         fprintf('converge\n');
         converge = 1;
     else
-        xi_ref = xi_B_ref(1:2)
-        xi = xi_B(1:2)
+        xi_ref = xi_B_ref(1:2);
+        xi = xi_B(1:2);
         fprintf('ne converge pas\n');
         converge = 0;
     end
