@@ -171,7 +171,7 @@ for sample = 1 : length(Data)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 1 : give waist linear and angular speed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    v_CoM = [ Data(sample, 6) , Data(sample, 7), 0];
+    v_CoM = [ Data(sample, 6); Data(sample, 7); 0];
     
     w_ref_B   = [ 0; 0; 0];
     v_ref_B   = v_CoM + cross(r_bc,w_ref_B) ;     % waist speed vector
