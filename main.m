@@ -144,6 +144,12 @@ end
 ForwardKinematics(1);
 
 
+for i = 1:length(uLINK)
+    uLINK(i).v  = [0.0 ; 0.0 ; 0.0 ] ;
+    uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
+end
+
+ForwardVelocity(1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -151,7 +157,7 @@ ForwardKinematics(1);
 
 
 ForwardKinematics(1);
-
+ForwardVelocity(1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Step 1 : give waist
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -238,9 +244,12 @@ while ( iteration < 2 )
     B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
         
     PL = A * B;
-    P = PL(1:3);                    % linear momentum
-    L = PL(4:6);                    % angular momentum
+    P = PL(1:3)                    % linear momentum
+    L = PL(4:6)                    % angular momentum
 
+    calcP(1)
+    calcL(1)
+    
     dL = (L - L_prev) / period;     % finite difference method
 
     L_prev = L;                     % save previous value for next step
