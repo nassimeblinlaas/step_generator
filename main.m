@@ -24,13 +24,37 @@ pZ = 0.6487;            % position Z of robot constant
 
 period = 0.005;         % sampling period in seconds
 
-WAIST = 1;              % labels
-RLEG_JOINT5 = 7;        %
-LLEG_JOINT5 = 13;       %
-RARM_JOINT5 = 23;       %
-LARM_JOINT5 = 30;       %
-RARM_JOINT6 = 24;       %
-LARM_JOINT6 = 31;       %
+WAIST = 1         %labels
+RLEG_JOINT0 = 2   %
+RLEG_JOINT1 = 3   %
+RLEG_JOINT2 = 4   %
+RLEG_JOINT3 = 5   %
+RLEG_JOINT4 = 6   %
+RLEG_JOINT5 = 7   %
+LLEG_JOINT0 = 8   %
+LLEG_JOINT1 = 9   %
+LLEG_JOINT2 = 10  %
+LLEG_JOINT3 = 11  %
+LLEG_JOINT4 = 12  %
+LLEG_JOINT5 = 13  %
+CHEST_JOINT0 = 14 %
+CHEST_JOINT1 = 15 %
+HEAD_JOINT0 = 16  %
+HEAD_JOINT1 = 17  %
+RARM_JOINT0 = 18  %
+RARM_JOINT1 = 19  %
+RARM_JOINT2 = 20  %
+RARM_JOINT3 = 21  %
+RARM_JOINT4 = 22  %
+RARM_JOINT5 = 23  %
+RARM_JOINT6 = 24  %
+LARM_JOINT0 = 25  %
+LARM_JOINT1 = 26  %
+LARM_JOINT2 = 27  %
+LARM_JOINT3 = 28  %
+LARM_JOINT4 = 29  %
+LARM_JOINT5 = 30  %
+LARM_JOINT6 = 31  %
 
 v_ref_B  = zeros(3,1);  % waist linear speed
 v_ref_F_1 = zeros(3,1);
@@ -479,7 +503,7 @@ d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ temp * xi_B;
 temp = eye(6,6);
 temp(1:3,4:6) = -r_B_H2;
 route = FindRoute(LARM_JOINT5);
-J_arm_2 = CalcJacobian(route(:,4:end));
+J_arm_2 = CalcJacobian(route(:,3:end));
 d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ temp * xi_B;
 
 
