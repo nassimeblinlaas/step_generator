@@ -100,7 +100,7 @@ uLINK = loadHRPdata('HRP2main_full.wrl');
 
 fprintf('Reading ./morisawa.csv\n')
 Whole_data = csvread('./morisawa.csv');
-Data = Whole_data(1:number_of_samples, :);     % ERR : quand je prends moins de 39 indices la boucle build contact points data plante, pourquoi ?
+Data = Whole_data(1:number_of_samples, :);
 given_xi_B = zeros(size(Data), 6);
 res_xi_B = zeros(size(Data), 6);
 halfsitting = load('./halfsitting.dat');
@@ -112,11 +112,7 @@ is_contact = zeros(length(Data) , 2);
 contact_coord = zeros(length(Data), 4);
 normal_vectors = zeros(length(Data), 3 * 2);    % three scalars per vector foreach two contact points
 
-length(Data)
-
 for i = 1:number_of_samples
-    i
-    
     if Data(i, 13) == 0
        is_contact(i, 1) = 1;
        contact_coord(i, 1) = Data(i, 11);       % coord x LF
