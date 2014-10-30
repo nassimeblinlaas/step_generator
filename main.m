@@ -18,7 +18,7 @@ clear ;
 global uLINK G
 G = 9.81 ;
 
-number_of_samples = 50; % size of data to treat
+number_of_samples = 100; % size of data to treat
 pZ = 0.6487;            % position Z of robot constant
 period = 0.005;         % sampling period in seconds
 
@@ -77,6 +77,9 @@ d_theta_leg_2 = zeros(6,1);
 d_theta_arm_1 = zeros(6,1);
 d_theta_arm_2 = zeros(6,1);
 
+q_values = zeros(number_of_samples, 30);
+
+
 
 
 I3 = eye(3,3);
@@ -97,12 +100,15 @@ fprintf('Initialisation\n')
 uLINK = loadHRPdata('HRP2main_full.wrl');
 
 fprintf('Reading ./morisawa.csv\n')
-Whole_data = csvread('./morisawa.csv');
+%Whole_data = csvread('./morisawa.csv');
+Whole_data = load('./TestMorisawa2007ShortWalk32TestFGPI.dat');
 Data = Whole_data(1:number_of_samples, :);
 given_xi_B = zeros(size(Data), 6);
 res_xi_B = zeros(size(Data), 6);
 halfsitting = load('./halfsitting.dat');
 fprintf('Reading done\n')
+
+q_values(1, :) = halfsitting * pi/180;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Build contact points data
@@ -134,8 +140,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-
-
 M = TotalMass(1);                               % total robot mass
 
 uLINK(WAIST).p = [ 0 0 0.6487 ]' ;
@@ -158,12 +162,15 @@ ForwardVelocity(1);
 CoM_init = calcCoM();
 r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
 
+
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for sample = 1 : number_of_samples
-    sample = sample                            % for debug usage
+    if (mod(sample, 10) == 0) sample   % for debug usage
+    end
     
     ForwardKinematics(1);
     ForwardVelocity(1);
@@ -172,8 +179,8 @@ for sample = 1 : number_of_samples
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     v_CoM = [ Data(sample, 6); Data(sample, 7); 0];
     
-    w_ref_B   = [ 0; 0; 0];
     v_ref_B   = v_CoM + cross(r_bc,w_ref_B) ;     % waist speed vector
+    w_ref_B   = [ 0; 0; 0];
     
     v_ref_F_1 = [ Data(sample, 14); Data(sample, 15); Data(sample, 16)];
     w_ref_F_1 = [ 0; 0; 0];
@@ -198,7 +205,7 @@ for sample = 1 : number_of_samples
     % Small loop
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %while ( converge == 0 )
-    while ( iteration < 10 )
+    while ( iteration < 3 )
         iteration = iteration + 1;
 
         
@@ -272,9 +279,12 @@ for sample = 1 : number_of_samples
         P = PL(1:3);                            % linear momentum
         L = PL(4:6);                            % angular momentum
 
-        calcP(1);
-        calcL(1);
+        P_kajita(sample,:) = calcP(1);
+        L_kajita(sample,:) = calcL(1);
     
+        P_nous(sample,:) = P;
+        L_nous(sample,:) = L;
+        
         dL = (L - L_prev) / period;             % finite difference method
 
         L_prev = L;                             % save previous value
@@ -461,7 +471,7 @@ for sample = 1 : number_of_samples
             - ( [M_leg_1 ; H_leg_1] * J_arm_1\ xi_H_1 + ...
             [M_leg_1 ; H_leg_1] * J_arm_2\ xi_H_2 );
 
-        xi_B_ref = A\y;
+        xi_B_new = A\y;
 
 
 
@@ -471,11 +481,11 @@ for sample = 1 : number_of_samples
 
 
 
-        if ( ( xi_B_ref(1:2) - xi_B(1:2) ) < err )
+        if ( ( xi_B_new(1:2) - xi_B(1:2) ) < err )
             %fprintf('converge\n');
             converge = 1;
         else
-            xi_ref = xi_B_ref(1:2);
+            xi_ref = xi_B_new(1:2);
             xi = xi_B(1:2);
             %fprintf('ne converge pas\n');
             converge = 0;
@@ -484,7 +494,7 @@ for sample = 1 : number_of_samples
 
     end
     
-    res_xi_B(sample, :) = xi_B_ref;
+    res_xi_B(sample, :) = xi_B_new;
     given_xi_B(sample, :) = xi_B;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -519,7 +529,42 @@ for sample = 1 : number_of_samples
     J_arm_2 = CalcJacobian(route(:,3:end));
     d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
 
+    dq(sample+1,:) = [d_theta_leg_1 ; d_theta_leg_2 ; zeros(4,1) ; d_theta_arm_1; 0 ; d_theta_arm_2 ; 0] ;
+    q_values(sample+1,:) = q_values(sample,:) + dq(sample,:) * period;
+    
+    for i = 2:length(uLINK)
+        uLINK(i).q   = q_values(i-1) ;
+        uLINK(i).dq  = dq(i-1) ;
+    end
 
+    uLINK(WAIST).v = xi_B_new(1:3);
+    uLINK(WAIST).w = xi_B_new(4:6);
+    uLINK(WAIST).p = uLINK(WAIST).p + uLINK(WAIST).v * period ;
+    
+    
+    
+    ForwardKinematics(1);
+    ForwardVelocity(1);
+    
+    hold off
+    newplot
+    DrawAllJoints(1);
+    axis equal
+  	set(gca,...
+        'CameraPositionMode','manual',...
+        'CameraPosition',[4,4,1],...
+        'CameraViewAngleMode','manual',....
+        'CameraViewAngle',15,...
+        'Projection','perspective',... 
+        'XLimMode','manual',...
+        'XLim',[-0.5 0.5],...
+        'YLimMode','manual',...
+        'YLim',[-0.5 0.5],...
+        'ZLimMode','manual',...
+        'ZLim',[0 1.5])
+    grid on
+    text(0.5, -0.4, 1.4, ['time=',num2str(sample*period,'%5.3f')])
+    drawnow;
     
 end
 
