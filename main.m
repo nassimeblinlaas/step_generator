@@ -24,7 +24,7 @@ pZ = 0.6487;            % position Z of robot constant
 
 period = 0.005;         % sampling period in seconds
 
-WAIST = 1;         %labels
+WAIST = 1;         % labels
 RLEG_JOINT0 = 2;   %
 RLEG_JOINT1 = 3;   %
 RLEG_JOINT2 = 4;   %
@@ -97,7 +97,8 @@ fprintf('Initialisation\n')
 uLINK = loadHRPdata('HRP2main_full.wrl');
 
 fprintf('Reading ./morisawa.csv\n')
-Data = csvread('./morisawa.csv');  
+Whole_data = csvread('./morisawa.csv');
+Data = Whole_data(1:50, :);
 halfsitting = load('./halfsitting.dat');
 fprintf('Reading done\n')
 
@@ -130,19 +131,19 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-sample = sample + 1
+
 
 M = TotalMass(1);	% total robot mass
 
 uLINK(WAIST).p = [ 0 0 0.6487 ]' ;
-
+uLINK(WAIST).R = eye(3,3) ;
 for i = 2:length(uLINK)
     uLINK(i).q   = halfsitting(i-1) * pi/180;
     uLINK(i).dq  = 0.0 ;
     uLINK(i).ddq = 0.0 ;
 end
-ForwardKinematics(1);
 
+ForwardKinematics(1);
 
 for i = 1:length(uLINK)
     uLINK(i).v  = [0.0 ; 0.0 ; 0.0 ] ;
@@ -150,333 +151,359 @@ for i = 1:length(uLINK)
 end
 
 ForwardVelocity(1);
+
+CoM_init = calcCoM()
+bXc = uLINK(WAIST).p - CoM_init 
+
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-ForwardKinematics(1);
-ForwardVelocity(1);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Step 1 : give waist
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-v_ref_B   = [ 0; 0; 0];     % waist speed vector
-w_ref_B   = [ 0; 0; 0];
-v_ref_F_1 = [ 0; 0; 0];
-v_ref_F_2 = [ 0; 0; 0];
-w_ref_F_1 = [ 0; 0; 0];
-w_ref_F_2 = [ 0; 0; 0];
-v_ref_H_1 = [ 0; 0; 0];
-v_ref_H_2 = [ 0; 0; 0];
-w_ref_H_1 = [ 0; 0; 0];
-w_ref_H_2 = [ 0; 0; 0];
-
-
-iteration   = 0;            % algorithm iteration
-converge    = 0;
-
-
-%while ( converge == 0 )
-while ( iteration < 2 )
-    iteration = iteration + 1;
+for sample = 1 : length(Data)
+    sample = sample             % for debug usage
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 2 : find angular speeds having new linear and angular speed of B
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
 
-    % vector waist -> end effector
-    r_B_F1 = hat(uLINK(WAIST).p - uLINK(RLEG_JOINT5).p);
-    r_B_F2 = hat(uLINK(WAIST).p - uLINK(LLEG_JOINT5).p);
-    r_B_H1 = hat(uLINK(WAIST).p - uLINK(RARM_JOINT5).p);
-    r_B_H2 = hat(uLINK(WAIST).p - uLINK(LARM_JOINT5).p);
+    ForwardKinematics(1);
+    ForwardVelocity(1);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Step 1 : give waist linear and angular speed
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+    v_ref_B   = [ 0; 0; 0];     % waist speed vector
+    w_ref_B   = [ 0; 0; 0];
+    
+    v_ref_F_1 = [ 0; 0; 0];
+    w_ref_F_1 = [ 0; 0; 0];
+    
+    v_ref_F_2 = [ 0; 0; 0];
+    w_ref_F_2 = [ 0; 0; 0];
+    
+    v_ref_H_1 = [0 ; 0 ; 0];
+    w_ref_H_1 = [ 0; 0; 0];
+    
+    v_ref_H_2 = [0 ; 0 ; 0];
+    w_ref_H_2 = [ 0; 0; 0];
+    
+    %[0.1 ; 0.1 ; 0.1];
 
-    xi_B   = [ v_ref_B   ; w_ref_B   ];              
-    xi_F_1 = [ v_ref_F_1 ; w_ref_F_1 ];
-    xi_F_2 = [ v_ref_F_2 ; w_ref_F_2 ];
-    xi_H_1 = [ v_ref_H_1 ; w_ref_H_1 ];
-    xi_H_2 = [ v_ref_H_2 ; w_ref_H_2 ];
 
-    % leg 1
-    tmp = [eye(3,3),-r_B_F1;zeros(3,3),eye(3,3)];
+    iteration   = 0;            % algorithm iteration
+    converge    = 0;            % convergence boolean
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Small loop
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %while ( converge == 0 )
+    while ( iteration < 10 )
+        iteration = iteration + 1
+
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Step 2 : find bodies angular speeds having new linear and angular speed of B
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        
+        % vector waist -> end effector
+        r_B_F1 = hat(uLINK(WAIST).p - uLINK(RLEG_JOINT5).p);
+        r_B_F2 = hat(uLINK(WAIST).p - uLINK(LLEG_JOINT5).p);
+        r_B_H1 = hat(uLINK(WAIST).p - uLINK(RARM_JOINT5).p);
+        r_B_H2 = hat(uLINK(WAIST).p - uLINK(LARM_JOINT5).p);
+
+        xi_B   = [ v_ref_B   ; w_ref_B   ];              
+        xi_F_1 = [ v_ref_F_1 ; w_ref_F_1 ];
+        xi_F_2 = [ v_ref_F_2 ; w_ref_F_2 ];
+        xi_H_1 = [ v_ref_H_1 ; w_ref_H_1 ];
+        xi_H_2 = [ v_ref_H_2 ; w_ref_H_2 ];
+
+        % leg 1, find angular speeds d_theta
+        tmp = [eye(3,3),-r_B_F1;zeros(3,3),eye(3,3)];
+        route = FindRoute(RLEG_JOINT5);
+        J_leg_1 = CalcJacobian(route);
+        d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;   
+
+        % leg 2
+        tmp = [eye(3,3),-r_B_F2;zeros(3,3),eye(3,3)];
+        route = FindRoute(LLEG_JOINT5);
+        J_leg_2 = CalcJacobian(route);
+        d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B;
+
+        % arm 1
+        tmp = [eye(3,3),-r_B_H1;zeros(3,3),eye(3,3)];
+        route = FindRoute(RARM_JOINT5);
+        route = route(3:end);
+        J_arm_1 = CalcJacobian(route);
+        d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B;
+
+        % arm 2
+        tmp = [eye(3,3),-r_B_H2;zeros(3,3),eye(3,3)];
+        route = FindRoute(LARM_JOINT5);
+        route = route(3:end);
+        J_arm_2 = CalcJacobian(route);
+        d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
+
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Step 3
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+        % Call MH subroutine finding intertia matrices
+        [ M_d_theta, H_d_theta, I_tilde, M_leg_1, M_leg_2, ...
+                M_arm_1, M_arm_2, H_leg_1, H_leg_2, H_arm_1, H_arm_2 ] = MH();
+        d_theta = [d_theta_leg_1' d_theta_leg_2'  d_theta_arm_1' d_theta_arm_2'];
+
+
+        r_B_G = [0 0 0]';              % vector waist to CoM
+
+        A = [ M*I3 , -M*hat(r_B_G) , M_d_theta ;
+                  zeros(3,3) , I_tilde , H_d_theta ];
+
+        B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
+
+        PL = A * B;
+        P = PL(1:3)                    % linear momentum
+        L = PL(4:6)                    % angular momentum
+
+        calcP(1)
+        calcL(1)
+    
+        dL = (L - L_prev) / period;     % finite difference method
+
+        L_prev = L;                     % save previous value for next step
+
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Step 4 : give \ddot{z_G}
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        % suppose that :
+        ddZg = 0; % always
+
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Step 5 : give lambda_k, slope of the ground
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        % hypothesis : slope is zero
+        % => alpha = 0   -> equations (16) (17) (18)
+        alpha = 0;
+
+        % for two contact points :
+        lambda = zeros(2, 1);
+        lambda(1) = 0.5;
+        lambda(2) = 0.5;
+
+        epsilon = zeros(2, 1);
+        epsilon_ref = zeros(2, 1);
+
+
+        epsilon(1) = (1 - alpha) * M * ( ddZg + G ) * ...
+            ( ( lambda(1) ) / ( lambda(1) * 1 + lambda(2) * 1 ) ); % multiplication by 1 is normal vectors n_k_z
+
+        epsilon(2) = (1 - alpha) * M * ( ddZg + G ) * ...
+            ( ( lambda(2) ) / ( lambda(2) * 1 + lambda(2) * 1 ) ); % multiplication by 1 is normal vectors n_k_z
+
+
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Step 6 : find d_d_x_G and d_d_y_G
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+        % Init
+        tau_C_x = 0;
+        tau_C_y = 0;
+        K = length(epsilon);
+        C =   zeros(length(Data), 3);     % contact point x, y, z 
+        x_G = zeros(length(Data), 3);     % for x_G, \dot x_G, \ddot x_G
+        y_G = zeros(length(Data), 3);     % for y_G, \dot y_G, \ddot y_G
+
+
+        % Torques
+        for k = 1:K
+            offset = (k-1) * 3;
+            x = offset + 1;
+            y = offset + 2;
+            z = offset + 3;
+
+            if ( is_contact(sample, k) == 1 )
+                tau_C_x = tau_C_x + epsilon(k) * ( contact_coord(sample, y) * normal_vectors(sample, z) - ...
+                    contact_coord(sample, z) * normal_vectors(sample, y) );
+
+                tau_C_y = tau_C_y + epsilon(k) * ( contact_coord(sample, x) * normal_vectors(sample, z) - ...
+                    contact_coord(sample, z) * normal_vectors(sample, x) );
+            end
+        end 
+
+
+        % Contact points
+        epsilon_tot = sum(epsilon);
+        for k = 1:K
+            offset = (k-1) * 3;
+            x = offset + 1;
+            y = offset + 2;
+            z = offset + 3;
+
+            C(sample, 1) = C(sample, 1) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, x);   % x_C
+            C(sample, 2) = C(sample, 2) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, y);   % y_C
+            C(sample, 3) = C(sample, 3) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, z);   % z_C
+        end
+
+        C(sample, 1) = alpha * C(sample, 1);
+        C(sample, 2) = alpha * C(sample, 2);
+        C(sample, 3) = (1 - alpha) * C(sample, 3);
+
+
+        % z_G = 0.814;  
+        % Accelerations
+        if (sample > 1)
+            x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...
+                ( M * (ddZg + G) * (x_G(sample, 1) - C(sample, 1)) - dL(2) - tau_C_y );         % G x acceleration
+            x_G(sample + 1, 2) = x_G(sample, 2) + x_G(sample, 3) * period;                      % G x speed
+            x_G(sample + 1, 1) = 2 * x_G(sample, 1) - x_G(sample - 1, 1) + period * period * x_G(sample, 3);    % G x position
+
+            y_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...             
+                ( M * (ddZg + G) * (y_G(sample, 1) - C(sample, 2)) - dL(1) - tau_C_x );         % G x acceleration
+            y_G(sample + 1, 2) = y_G(sample, 2) + y_G(sample, 3) * period;                      % G x speed
+            y_G(sample + 1, 1) = 2 * y_G(sample, 1) - y_G(sample - 1, 1) + period * period * y_G(sample, 3);    % G x position
+
+        else
+            x_G(1, 3) = 0;
+            x_G(1, 2) = 0;
+            x_G(1, 1) = Data(1, 2);
+
+            x_G(2, 3) = 0;
+            x_G(2, 2) = 0;
+            x_G(2, 1) = Data(2, 2);
+
+            y_G(1, 3) = 0;
+            y_G(1, 2) = 0;
+            y_G(1, 1) = Data(1, 3);
+
+            y_G(2, 3) = 0;
+            y_G(2, 2) = 0;
+            y_G(2, 1) = Data(2, 3);        
+        end
+
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Step 7 : find  P_ref
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        P_ref_x = M * x_G(sample, 2);
+        P_ref_y = M * y_G(sample, 2);
+        P_ref_z = M * Data(sample, 8);
+
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Step 8 : find xi_B_ref
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        % xi_B = A^-1 y
+
+        temp0 = zeros(6,6);
+        temp0(1:3, 1:3) = M * I3;
+        temp0(1:3, 4:6) = -M * hat(r_B_G);
+        temp0(4:6, 4:6) = I_tilde;
+
+
+
+        temp1 = eye(6,6);
+        temp1(1:3, 4:6) = -r_B_F1;
+
+        temp2 = eye(6,6);
+        temp2(1:3, 4:6) = -r_B_F2;
+
+        temp3 = eye(6,6);
+        temp3(1:3, 4:6) = -r_B_H1;
+
+        temp4 = eye(6,6);
+        temp4(1:3, 4:6) = -r_B_H2;
+
+
+        %M_leg_1 = M_d_theta()
+
+        A = temp0 ...
+            - ([M_leg_1 ; H_leg_1] * J_leg_1\ temp1 + [M_leg_1 ; H_leg_1] * J_leg_2\ temp2) ...
+            - ([M_leg_1 ; H_leg_1] * J_arm_1\ temp3 + [M_leg_1 ; H_leg_1] * J_arm_2\ temp4);
+
+
+        y = [P_ref_x ; P_ref_y ; P_ref_z ; L] ...
+            - ( [M_leg_1 ; H_leg_1] * J_leg_1\ xi_F_1 + [M_leg_1 ; H_leg_1] * J_leg_2\ xi_F_2 ) ...
+            - ( [M_leg_1 ; H_leg_1] * J_arm_1\ xi_H_1 + [M_leg_1 ; H_leg_1] * J_arm_2\ xi_H_2 );
+
+        %xi_B_ref = inv(A) * y;
+        xi_B_ref = A\y;
+
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Step 9 : checking convergence
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+        if ( ( xi_B_ref(1:2) - xi_B(1:2) ) < err )
+            fprintf('converge\n');
+            converge = 1;
+        else
+            xi_ref = xi_B_ref(1:2);
+            xi = xi_B(1:2);
+            fprintf('ne converge pas\n');
+            converge = 0;
+        end
+
+
+    end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Step 10 : find angular speeds having new linear and angular speed of B
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+     % leg 1
+    tmp = eye(6,6);
+    tmp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
     route = FindRoute(RLEG_JOINT5);
     J_leg_1 = CalcJacobian(route);
-    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B  % angular speed    
-    
+    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;  % angular speeds
+
     % leg 2
-    tmp = [eye(3,3),-r_B_F2;zeros(3,3),eye(3,3)];
+    tmp = eye(6,6);
+    tmp(1:3,4:6) = -r_B_F2;
     route = FindRoute(LLEG_JOINT5);
     J_leg_2 = CalcJacobian(route);
-    d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B
-    
+    d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B;
+
     % arm 1
-    tmp = [eye(3,3),-r_B_H1;zeros(3,3),eye(3,3)];
+    tmp = eye(6,6);
+    tmp(1:3,4:6) = -r_B_H1;
     route = FindRoute(RARM_JOINT5);
-    route = route(3:end);
-    J_arm_1 = CalcJacobian(route);
-    d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B
+    J_arm_1 = CalcJacobian(route(:,3:end));
+    d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B;
 
     % arm 2
-    tmp = [eye(3,3),-r_B_H2;zeros(3,3),eye(3,3)];
+    tmp = eye(6,6);
+    tmp(1:3,4:6) = -r_B_H2;
     route = FindRoute(LARM_JOINT5);
-    route = route(3:end);
-    J_arm_2 = CalcJacobian(route);
-    d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B
+    J_arm_2 = CalcJacobian(route(:,3:end));
+    d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
 
 
-%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 3
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 
     
-    [ M_d_theta, H_d_theta, I_tilde, M_leg_1, M_leg_2, ...
-            M_arm_1, M_arm_2, H_leg_1, H_leg_2, H_arm_1, H_arm_2 ] = MH();
-    d_theta = [d_theta_leg_1' d_theta_leg_2'  d_theta_arm_1' d_theta_arm_2'];
-  
-    
-    r_B_G = [0 0 0]';              % vector waist to CoM
-    
-    A = [ M*I3 , -M*hat(r_B_G) , M_d_theta ;
-              zeros(3,3) , I_tilde , H_d_theta ];
-    
-    B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
-        
-    PL = A * B;
-    P = PL(1:3)                    % linear momentum
-    L = PL(4:6)                    % angular momentum
-
-    calcP(1)
-    calcL(1)
-    
-    dL = (L - L_prev) / period;     % finite difference method
-
-    L_prev = L;                     % save previous value for next step
-
-
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 4 : give \ddot{z_G}
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    % suppose that :
-    ddZg = 0; % always
-
-
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 5 : give lambda_k, slope of the ground
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    % hypothesis : slope is zero
-    % => alpha = 0   -> equations (16) (17) (18)
-    alpha = 0;
-
-    % for two contact points :
-    lambda = zeros(2, 1);
-    lambda(1) = 0.5;
-    lambda(2) = 0.5;
-
-    epsilon = zeros(2, 1);
-    epsilon_ref = zeros(2, 1);
-    
-    
-    epsilon(1) = (1 - alpha) * M * ( ddZg + G ) * ...
-        ( ( lambda(1) ) / ( lambda(1) * 1 + lambda(2) * 1 ) ); % multiplication by 1 is normal vectors n_k_z
-
-    epsilon(2) = (1 - alpha) * M * ( ddZg + G ) * ...
-        ( ( lambda(2) ) / ( lambda(2) * 1 + lambda(2) * 1 ) ); % multiplication by 1 is normal vectors n_k_z
-
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 6 : find d_d_x_G and d_d_y_G
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    
-    % Init
-    tau_C_x = 0;
-    tau_C_y = 0;
-    K = length(epsilon);
-    C =   zeros(length(sample), 3);     % contact point x, y, z 
-    x_G = zeros(length(sample), 3);     % for x_G, \dot x_G, \ddot x_G
-    y_G = zeros(length(sample), 3);     % for y_G, \dot y_G, \ddot y_G
-    
-    
-    % Torques
-    for k = 1:K
-        offset = (k-1) * 3;
-        x = offset + 1;
-        y = offset + 2;
-        z = offset + 3;
-
-        if ( is_contact(sample, k) == 1 )
-            tau_C_x = tau_C_x + epsilon(k) * ( contact_coord(sample, y) * normal_vectors(sample, z) - ...
-                contact_coord(sample, z) * normal_vectors(sample, y) );
-
-            tau_C_y = tau_C_y + epsilon(k) * ( contact_coord(sample, x) * normal_vectors(sample, z) - ...
-                contact_coord(sample, z) * normal_vectors(sample, x) );
-        end
-    end 
-    
-    
-    % Contact points
-    epsilon_tot = sum(epsilon);
-    for k = 1:K
-        offset = (k-1) * 3;
-        x = offset + 1;
-        y = offset + 2;
-        z = offset + 3;
-        
-        C(sample, 1) = C(sample, 1) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, x);   % x_C
-        C(sample, 2) = C(sample, 2) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, y);   % y_C
-        C(sample, 3) = C(sample, 3) + ( epsilon(k) / epsilon_tot) * contact_coord(sample, z);   % z_C
-    end
-    
-    C(sample, 1) = alpha * C(sample, 1);
-    C(sample, 2) = alpha * C(sample, 2);
-    C(sample, 3) = (1 - alpha) * C(sample, 3);
-    
-    
-    % z_G = 0.814;  
-    % Accelerations
-    if (sample > 1)
-        x_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...
-            ( M * (ddZg + G) * (x_G(sample, 1) - C(sample, 1)) - dL(2) - tau_C_y );         % G x acceleration
-        x_G(sample + 1, 2) = x_G(sample, 2) + x_G(sample, 3) * period;                      % G x speed
-        x_G(sample + 1, 1) = 2 * x_G(sample, 1) - x_G(sample - 1, 1) + period * period * x_G(sample, 3);    % G x position
-            
-        y_G(sample, 3) = (1 / (M * ( Data(sample, 4) - C(sample, 3)))) * ...             
-            ( M * (ddZg + G) * (y_G(sample, 1) - C(sample, 2)) - dL(1) - tau_C_x );         % G x acceleration
-        y_G(sample + 1, 2) = y_G(sample, 2) + y_G(sample, 3) * period;                      % G x speed
-        y_G(sample + 1, 1) = 2 * y_G(sample, 1) - y_G(sample - 1, 1) + period * period * y_G(sample, 3);    % G x position
-   
-    else
-        x_G(1, 3) = 0;
-        x_G(1, 2) = 0;
-        x_G(1, 1) = Data(1, 2);
-        
-        x_G(2, 3) = 0;
-        x_G(2, 2) = 0;
-        x_G(2, 1) = Data(2, 2);
-
-        y_G(1, 3) = 0;
-        y_G(1, 2) = 0;
-        y_G(1, 1) = Data(1, 3);
-        
-        y_G(2, 3) = 0;
-        y_G(2, 2) = 0;
-        y_G(2, 1) = Data(2, 3);        
-    end
-    
-     
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 7 : find  P_ref
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    P_ref_x = M * x_G(sample, 2);
-    P_ref_y = M * y_G(sample, 2);
-    P_ref_z = M * Data(sample, 8);
-
-
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 8 : find xi_B_ref
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    % xi_B = A^-1 y
-    
-    temp0 = zeros(6,6);
-    temp0(1:3, 1:3) = M * I3;
-    temp0(1:3, 4:6) = -M * hat(r_B_G);
-    temp0(4:6, 4:6) = I_tilde;
-    
-    
-
-    temp1 = eye(6,6);
-    temp1(1:3, 4:6) = -r_B_F1;
-
-    temp2 = eye(6,6);
-    temp2(1:3, 4:6) = -r_B_F2;
-
-    temp3 = eye(6,6);
-    temp3(1:3, 4:6) = -r_B_H1;
-
-    temp4 = eye(6,6);
-    temp4(1:3, 4:6) = -r_B_H2;
-
-    
-    %M_leg_1 = M_d_theta()
-
-    A = temp0 ...
-        - ([M_leg_1 ; H_leg_1] * J_leg_1\ temp1 + [M_leg_1 ; H_leg_1] * J_leg_2\ temp2) ...
-        - ([M_leg_1 ; H_leg_1] * J_arm_1\ temp3 + [M_leg_1 ; H_leg_1] * J_arm_2\ temp4);
-
-
-    y = [P_ref_x ; P_ref_y ; P_ref_z ; L] ...
-        - ( [M_leg_1 ; H_leg_1] * J_leg_1\ xi_F_1 + [M_leg_1 ; H_leg_1] * J_leg_2\ xi_F_2 ) ...
-        - ( [M_leg_1 ; H_leg_1] * J_arm_1\ xi_H_1 + [M_leg_1 ; H_leg_1] * J_arm_2\ xi_H_2 );
-
-    %xi_B_ref = inv(A) * y;
-    xi_B_ref = A\y;
-
-
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 9 : checking convergence
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-    if ( ( xi_B_ref(1:2) - xi_B(1:2) ) < err )
-        fprintf('converge\n');
-        converge = 1;
-    else
-        xi_ref = xi_B_ref(1:2);
-        xi = xi_B(1:2);
-        fprintf('ne converge pas\n');
-        converge = 0;
-    end
-
-
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Step 10 : find angular speeds having new linear and angular speed of B
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
- % leg 1
-tmp = eye(6,6);
-tmp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
-route = FindRoute(RLEG_JOINT5);
-J_leg_1 = CalcJacobian(route);
-d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;  % angular speeds
-
-% leg 2
-tmp = eye(6,6);
-tmp(1:3,4:6) = -r_B_F2;
-route = FindRoute(LLEG_JOINT5);
-J_leg_2 = CalcJacobian(route);
-d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B;
-
-% arm 1
-tmp = eye(6,6);
-tmp(1:3,4:6) = -r_B_H1;
-route = FindRoute(RARM_JOINT5);
-J_arm_1 = CalcJacobian(route(:,3:end));
-d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B;
-
-% arm 2
-tmp = eye(6,6);
-tmp(1:3,4:6) = -r_B_H2;
-route = FindRoute(LARM_JOINT5);
-J_arm_2 = CalcJacobian(route(:,3:end));
-d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
-
-
-
-
 
 
 
