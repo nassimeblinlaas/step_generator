@@ -184,7 +184,7 @@ for sample = 1 : number_of_samples
         uLINK(i).v  = [0.0 ; 0.0 ; 0.0 ] ;
         uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
     end
-    v_CoM = [ Data(1, 6); Data(1, 7); Data(1, 7)];
+    v_CoM = [ Data(sample, 6); Data(sample, 7); Data(sample, 7)];
     uLINK(WAIST).v = v_CoM + cross(r_bg,w_ref_B) ;
     uLINK(WAIST).w = [ 0; 0; 0] ;
 
@@ -575,9 +575,10 @@ for sample = 1 : number_of_samples
 
     uLINK(WAIST).v = xi_B_new(1:3);
     uLINK(WAIST).w = xi_B_new(4:6);
-    uLINK(WAIST).p = uLINK(WAIST).p + uLINK(WAIST).v * period ;
+    uLINK(WAIST).p = uLINK(WAIST).p + uLINK(WAIST).v * period;
     
     
+    xi_B_new;
     
     ForwardKinematics(1);
     ForwardVelocity(1);
