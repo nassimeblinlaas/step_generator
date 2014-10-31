@@ -18,7 +18,7 @@ clear ;
 global uLINK G
 G = 9.81 ;
 
-number_of_samples = 2; % size of data to treat
+number_of_samples = 5; % size of data to treat
 period = 0.005;         % sampling period in seconds
 
 WAIST = 1;              % labels
@@ -313,6 +313,8 @@ for sample = 1 : number_of_samples
         P  = PL(1:3);                           % linear momentum
         L  = PL(4:6);                           % angular momentum
 
+        
+        
         P_kajita(sample,:) = calcP(1);
         L_kajita(sample,:) = calcL(1);
     
@@ -344,13 +346,17 @@ for sample = 1 : number_of_samples
         P2 = PL2(1:3);                            % linear momentum
         L2 = PL2(4:6);                            % angular momentum
 
-        P
-        P2
-        P_kajita(sample,:)'
+        P;
+        P2;
+        P_kajita(sample,:)';
         
-        L
-        L2
-        L_kajita(sample,:)'
+        L;
+        L2;
+        L_kajita(sample,:)';
+        
+        dL = (L2 - L_prev) / period;             % finite difference method
+
+        L_prev = L2;                             % save previous value
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Step 4 : give \ddot{z_G}
