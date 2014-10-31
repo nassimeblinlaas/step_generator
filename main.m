@@ -99,7 +99,7 @@ fprintf('Initialisation\n')
 
 uLINK = loadHRPdata('HRP2main_full.wrl');
 
-fprintf('Reading ./morisawa.csv\n')
+fprintf('Reading ./TestMorisawa2007ShortWalk32TestFGPI.dat\n')
 %Whole_data = csvread('./morisawa.csv');
 Whole_data = load('./TestMorisawa2007ShortWalk32TestFGPI.dat');
 Data = Whole_data(1:number_of_samples, :);
@@ -164,7 +164,7 @@ r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
 
 
 
-%%
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -181,6 +181,8 @@ for sample = 1 : number_of_samples
     
     v_ref_B   = v_CoM + cross(r_bc,w_ref_B) ;     % waist speed vector
     w_ref_B   = [ 0; 0; 0];
+    
+    uLINK(WAIST).v = v_ref_B ;
     
     v_ref_F_1 = [ Data(sample, 14); Data(sample, 15); Data(sample, 16)];
     w_ref_F_1 = [ 0; 0; 0];
@@ -230,28 +232,28 @@ for sample = 1 : number_of_samples
 
         % leg 1, find angular speeds d_theta
         tmp = [eye(3,3),-r_B_F1;zeros(3,3),eye(3,3)];
-        route = FindRoute(RLEG_JOINT5);
-        J_leg_1 = CalcJacobian(route);
+        route_leg1 = FindRoute(RLEG_JOINT5);
+        J_leg_1 = CalcJacobian(route_leg1);
         d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;
 
         % leg 2
         tmp = [eye(3,3),-r_B_F2;zeros(3,3),eye(3,3)];
-        route = FindRoute(LLEG_JOINT5);
-        J_leg_2 = CalcJacobian(route);
+        route_leg2 = FindRoute(LLEG_JOINT5);
+        J_leg_2 = CalcJacobian(route_leg2);
         d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B;
 
         % arm 1
         tmp = [eye(3,3),-r_B_H1;zeros(3,3),eye(3,3)];
-        route = FindRoute(RARM_JOINT5);
-        route = route(3:end);
-        J_arm_1 = CalcJacobian(route);
+        route_arm1 = FindRoute(RARM_JOINT5);
+        route_arm1 = route_arm1(3:end);
+        J_arm_1 = CalcJacobian(route_arm1);
         d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B;
 
         % arm 2
         tmp = [eye(3,3),-r_B_H2;zeros(3,3),eye(3,3)];
-        route = FindRoute(LARM_JOINT5);
-        route = route(3:end);
-        J_arm_2 = CalcJacobian(route);
+        route_arm2 = FindRoute(LARM_JOINT5);
+        route_arm2 = route_arm2(3:end);
+        J_arm_2 = CalcJacobian(route_arm2);
         d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
 
         
@@ -267,11 +269,8 @@ for sample = 1 : number_of_samples
         d_theta = [d_theta_leg_1' d_theta_leg_2' ...
             d_theta_arm_1' d_theta_arm_2'];
 
-
-        r_B_G = [0 0 0]';                       % vector waist to CoM
-
-        A = [ M*I3 , -M*hat(r_B_G) , M_d_theta ;
-                  zeros(3,3) , I_tilde , H_d_theta ];
+        A = [ M*I3 , -M*hat(r_bc) , M_d_theta ;
+              zeros(3,3) , I_tilde , H_d_theta ];
 
         B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
 
@@ -289,8 +288,35 @@ for sample = 1 : number_of_samples
 
         L_prev = L;                             % save previous value
 
+        [M2,mc2,c2,I_tilde2] = calcMHzero(1);
+        
+        
+        M2_leg_1 = [uLINK(route_leg1).mj] ; H2_0_leg_1 = [uLINK(route_leg1).hj]
+        M2_leg_2 = [uLINK(route_leg2).mj] ; H2_0_leg_2 = [uLINK(route_leg2).hj]
+        M2_arm_1 = [uLINK(route_arm1).mj] ; H2_0_arm_1 = [uLINK(route_arm1).hj]
+        M2_arm_2 = [uLINK(route_arm2).mj] ; H2_0_arm_2 = [uLINK(route_arm2).hj]
+        
+        M2_d_theta   = [M2_leg_1  , M2_leg_2  , M2_arm_1  , M2_arm_2  ];
+        H2_0_d_theta = [H2_0_leg_1, H2_0_leg_2, H2_0_arm_1, H2_0_arm_2];
+        H2_d_theta   = H2_0_d_theta - hat(uLINK(WAIST).c_tilde) * M2_d_theta ; 
+        
+        A2 = [ M*I3 , -M*hat(r_bc) , M2_d_theta ;
+                  zeros(3,3) , I_tilde2 , H2_d_theta ];
 
+        B2 = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
 
+        PL2 = A * B;
+        P2 = PL2(1:3);                            % linear momentum
+        L2 = PL2(4:6);                            % angular momentum
+
+        P
+        P2
+        calcP = calcP(1)
+        
+        L
+        L2
+        calcL = calcL(1)
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Step 4 : give \ddot{z_G}
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
