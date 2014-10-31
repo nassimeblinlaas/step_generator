@@ -19,7 +19,6 @@ global uLINK G
 G = 9.81 ;
 
 number_of_samples = 2; % size of data to treat
-pZ = 0.6487;            % position Z of robot constant
 period = 0.005;         % sampling period in seconds
 
 WAIST = 1;              % labels
@@ -194,18 +193,23 @@ for sample = 1 : number_of_samples
     sample
     if (mod(sample, 10) == 0) sample   % for debug usage
     end
-    
-    ForwardKinematics(1);
-    ForwardVelocity(1);
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Step 1 : give waist linear and angular speed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    v_CoM = [ Data(sample, 6); Data(sample, 7); 0];
+
+    for i = 1:length(uLINK)
+        uLINK(i).v  = [0.0 ; 0.0 ; 0.0 ] ;
+        uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
+    end
+    v_CoM = [ Data(1, 6); Data(1, 7); Data(1, 7)];
+    uLINK(WAIST).v = v_CoM + cross(r_bc,w_ref_B) ;
+    uLINK(WAIST).w = [ 0; 0; 0] ;
+
+    ForwardVelocity(1);
     
-    v_ref_B   = v_CoM + cross(r_bc,w_ref_B) ;     % waist speed vector
-    w_ref_B   = [ 0; 0; 0];
-    
-    uLINK(WAIST).v = v_ref_B ;
+    v_ref_B    = uLINK(WAIST).v ;
+    w_ref_B   = uLINK(WAIST).w ;
     
     v_ref_F_1 = [ Data(sample, 14); Data(sample, 15); Data(sample, 16)];
     w_ref_F_1 = [ 0; 0; 0];
@@ -218,13 +222,9 @@ for sample = 1 : number_of_samples
     
     v_ref_H_2 = [ 0; 0; 0];
     w_ref_H_2 = [ 0; 0; 0];
-    
-    %[0.1 ; 0.1 ; 0.1];
-
 
     iteration   = 0;                            % algorithm iteration
     converge    = 0;                            % convergence boolean
-
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Small loop
@@ -234,14 +234,12 @@ for sample = 1 : number_of_samples
         iteration = iteration + 1;
 
         
-
-        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Step 2 : find bodies angular speeds 
         % having new linear and angular speed of B
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        
+        ForwardKinematics(1);
+                
         % vector waist -> end effector
         r_B_F1 = hat(uLINK(WAIST).p - uLINK(RLEG_JOINT5).p);
         r_B_F2 = hat(uLINK(WAIST).p - uLINK(LLEG_JOINT5).p);
@@ -251,28 +249,37 @@ for sample = 1 : number_of_samples
         xi_B   = [ v_ref_B   ; w_ref_B   ];
         xi_F_1 = [ v_ref_F_1 ; w_ref_F_1 ];
         xi_F_2 = [ v_ref_F_2 ; w_ref_F_2 ];
+        
+        f1Xb = [eye(3,3),-r_B_F1;zeros(3,3),eye(3,3)];
+        f2Xb = [eye(3,3),-r_B_F2;zeros(3,3),eye(3,3)];
+        h1Xb = [eye(3,3),-r_B_H1;zeros(3,3),eye(3,3)];
+        h2Xb = [eye(3,3),-r_B_H2;zeros(3,3),eye(3,3)];
+        
+        v_ref_H_1 = v_ref_B ;
+        v_ref_H_2 = v_ref_B ;
+        
         xi_H_1 = [ v_ref_H_1 ; w_ref_H_1 ];
         xi_H_2 = [ v_ref_H_2 ; w_ref_H_2 ];
 
         % leg 1, find angular speeds d_theta
-        tmp = [eye(3,3),-r_B_F1;zeros(3,3),eye(3,3)];
+        
         J_leg_1 = CalcJacobian(route_leg1);
-        d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;
+        d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ f1Xb * xi_B;
 
         % leg 2
-        tmp = [eye(3,3),-r_B_F2;zeros(3,3),eye(3,3)];
+        
         J_leg_2 = CalcJacobian(route_leg2);
-        d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B;
+        d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ f2Xb * xi_B;
 
         % arm 1
-        tmp = [eye(3,3),-r_B_H1;zeros(3,3),eye(3,3)];
+        
         J_arm_1 = CalcJacobian(route_arm1);
-        d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B;
+        d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ h1Xb * xi_B;
 
         % arm 2
-        tmp = [eye(3,3),-r_B_H2;zeros(3,3),eye(3,3)];
+        
         J_arm_2 = CalcJacobian(route_arm2);
-        d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
+        d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ h2Xb * xi_B;
 
         for i = 1:length(uLINK)
             uLINK(i).dq = 0.0 ;
@@ -283,10 +290,9 @@ for sample = 1 : number_of_samples
             uLINK(route_arm1(i)).dq = d_theta_arm_1(i);
             uLINK(route_arm2(i)).dq = d_theta_arm_2(i);
         end
-        ForwardKinematics(1);
+
         ForwardVelocity(1);
 
-        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Step 3 : find angular momentum L
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
