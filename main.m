@@ -18,7 +18,7 @@ clear ;
 global uLINK G
 G = 9.81 ;
 
-number_of_samples = 100; % size of data to treat
+number_of_samples = 2; % size of data to treat
 pZ = 0.6487;            % position Z of robot constant
 period = 0.005;         % sampling period in seconds
 
@@ -53,6 +53,13 @@ LARM_JOINT3 = 28;       %
 LARM_JOINT4 = 29;       %
 LARM_JOINT5 = 30;       %
 LARM_JOINT6 = 31;       %
+
+route_leg1 = FindRoute(RLEG_JOINT5); 
+route_leg2 = FindRoute(LLEG_JOINT5);
+route_arm1 = FindRoute(RARM_JOINT5);
+route_arm1 = route_arm1(3:end);
+route_arm2 = FindRoute(LARM_JOINT5);
+route_arm2 = route_arm2(3:end);
 
 v_ref_B  = zeros(3,1);  % waist linear speed
 v_ref_F_1 = zeros(3,1);
@@ -169,6 +176,7 @@ r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for sample = 1 : number_of_samples
+    sample
     if (mod(sample, 10) == 0) sample   % for debug usage
     end
     
@@ -207,10 +215,11 @@ for sample = 1 : number_of_samples
     % Small loop
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %while ( converge == 0 )
-    while ( iteration < 3 )
+    while ( iteration < 5 )
         iteration = iteration + 1;
 
         
+
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Step 2 : find bodies angular speeds 
@@ -232,27 +241,21 @@ for sample = 1 : number_of_samples
 
         % leg 1, find angular speeds d_theta
         tmp = [eye(3,3),-r_B_F1;zeros(3,3),eye(3,3)];
-        route_leg1 = FindRoute(RLEG_JOINT5);
         J_leg_1 = CalcJacobian(route_leg1);
         d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;
 
         % leg 2
         tmp = [eye(3,3),-r_B_F2;zeros(3,3),eye(3,3)];
-        route_leg2 = FindRoute(LLEG_JOINT5);
         J_leg_2 = CalcJacobian(route_leg2);
         d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B;
 
         % arm 1
         tmp = [eye(3,3),-r_B_H1;zeros(3,3),eye(3,3)];
-        route_arm1 = FindRoute(RARM_JOINT5);
-        route_arm1 = route_arm1(3:end);
         J_arm_1 = CalcJacobian(route_arm1);
         d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B;
 
         % arm 2
         tmp = [eye(3,3),-r_B_H2;zeros(3,3),eye(3,3)];
-        route_arm2 = FindRoute(LARM_JOINT5);
-        route_arm2 = route_arm2(3:end);
         J_arm_2 = CalcJacobian(route_arm2);
         d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
 
@@ -274,9 +277,9 @@ for sample = 1 : number_of_samples
 
         B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
 
-        PL = A * B;
-        P = PL(1:3);                            % linear momentum
-        L = PL(4:6);                            % angular momentum
+        PL =   A * B;
+        P  = PL(1:3);                           % linear momentum
+        L  = PL(4:6);                           % angular momentum
 
         P_kajita(sample,:) = calcP(1);
         L_kajita(sample,:) = calcL(1);
@@ -291,10 +294,10 @@ for sample = 1 : number_of_samples
         [M2,mc2,c2,I_tilde2] = calcMHzero(1);
         
         
-        M2_leg_1 = [uLINK(route_leg1).mj] ; H2_0_leg_1 = [uLINK(route_leg1).hj]
-        M2_leg_2 = [uLINK(route_leg2).mj] ; H2_0_leg_2 = [uLINK(route_leg2).hj]
-        M2_arm_1 = [uLINK(route_arm1).mj] ; H2_0_arm_1 = [uLINK(route_arm1).hj]
-        M2_arm_2 = [uLINK(route_arm2).mj] ; H2_0_arm_2 = [uLINK(route_arm2).hj]
+        M2_leg_1 = [uLINK(route_leg1).mj] ; H2_0_leg_1 = [uLINK(route_leg1).hj];
+        M2_leg_2 = [uLINK(route_leg2).mj] ; H2_0_leg_2 = [uLINK(route_leg2).hj];
+        M2_arm_1 = [uLINK(route_arm1).mj] ; H2_0_arm_1 = [uLINK(route_arm1).hj];
+        M2_arm_2 = [uLINK(route_arm2).mj] ; H2_0_arm_2 = [uLINK(route_arm2).hj];
         
         M2_d_theta   = [M2_leg_1  , M2_leg_2  , M2_arm_1  , M2_arm_2  ];
         H2_0_d_theta = [H2_0_leg_1, H2_0_leg_2, H2_0_arm_1, H2_0_arm_2];
@@ -303,19 +306,19 @@ for sample = 1 : number_of_samples
         A2 = [ M*I3 , -M*hat(r_bc) , M2_d_theta ;
                   zeros(3,3) , I_tilde2 , H2_d_theta ];
 
-        B2 = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
+        B2 = [ v_ref_B ; w_ref_B ; d_theta' ] ;
 
-        PL2 = A * B;
+        PL2 = A2 * B2;
         P2 = PL2(1:3);                            % linear momentum
         L2 = PL2(4:6);                            % angular momentum
 
         P
         P2
-        calcP = calcP(1)
+        P_kajita(sample,:)'
         
         L
         L2
-        calcL = calcL(1)
+        L_kajita(sample,:)'
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Step 4 : give \ddot{z_G}
@@ -467,7 +470,7 @@ for sample = 1 : number_of_samples
 
         temp0 = zeros(6,6);
         temp0(1:3, 1:3) = M * I3;
-        temp0(1:3, 4:6) = -M * hat(r_B_G);
+        temp0(1:3, 4:6) = -M * hat(r_bc);
         temp0(4:6, 4:6) = I_tilde;
 
 
