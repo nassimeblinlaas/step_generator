@@ -86,9 +86,6 @@ d_theta_arm_2 = zeros(6,1);
 
 q_values = zeros(number_of_samples, 30);
 
-
-
-
 I3 = eye(3,3);
 
 sample = 0;             % current sample
@@ -148,7 +145,6 @@ end
 
 
 M = TotalMass(1);                               % total robot mass
-
 uLINK(WAIST).p = [ 0 0 0.6487 ]' ;
 uLINK(WAIST).R = eye(3,3) ;
 for i = 2:length(uLINK)
@@ -156,21 +152,40 @@ for i = 2:length(uLINK)
     uLINK(i).dq  = 0.0 ;
     uLINK(i).ddq = 0.0 ;
 end
-
 ForwardKinematics(1);
+
 
 for i = 1:length(uLINK)
     uLINK(i).v  = [0.0 ; 0.0 ; 0.0 ] ;
     uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
 end
+CoM_init = calcCoM();
+r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
+v_CoM = [ Data(1, 6); Data(1, 7); 0];
+uLINK(WAIST).v = v_CoM + cross(r_bc,w_ref_B) ;
+uLINK(WAIST).w = [ 0; 0; 0] ;
 
 ForwardVelocity(1);
 
-CoM_init = calcCoM();
-r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
-
-
-
+hold off
+newplot
+DrawAllJoints(1);
+axis equal
+set(gca,...
+    'CameraPositionMode','manual',...
+    'CameraPosition',[4,4,1],...
+    'CameraViewAngleMode','manual',....
+    'CameraViewAngle',15,...
+    'Projection','perspective',... 
+    'XLimMode','manual',...
+    'XLim',[-0.5 0.5],...
+    'YLimMode','manual',...
+    'YLim',[-0.5 0.5],...
+    'ZLimMode','manual',...
+    'ZLim',[0 1.5])
+grid on
+text(0.5, -0.4, 1.4, ['time=',num2str(sample*period,'%5.3f')])
+drawnow;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
@@ -259,7 +274,18 @@ for sample = 1 : number_of_samples
         J_arm_2 = CalcJacobian(route_arm2);
         d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
 
-        
+        for i = 1:length(uLINK)
+            uLINK(i).dq = 0.0 ;
+        end
+        for i = 1:length(route_arm2)
+            uLINK(route_leg1(i)).dq = d_theta_leg_1(i);
+            uLINK(route_leg2(i)).dq = d_theta_leg_2(i);
+            uLINK(route_arm1(i)).dq = d_theta_arm_1(i);
+            uLINK(route_arm2(i)).dq = d_theta_arm_2(i);
+        end
+        ForwardKinematics(1);
+        ForwardVelocity(1);
+
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Step 3 : find angular momentum L
@@ -580,26 +606,6 @@ for sample = 1 : number_of_samples
     
     ForwardKinematics(1);
     ForwardVelocity(1);
-    
-    hold off
-    newplot
-    DrawAllJoints(1);
-    axis equal
-  	set(gca,...
-        'CameraPositionMode','manual',...
-        'CameraPosition',[4,4,1],...
-        'CameraViewAngleMode','manual',....
-        'CameraViewAngle',15,...
-        'Projection','perspective',... 
-        'XLimMode','manual',...
-        'XLim',[-0.5 0.5],...
-        'YLimMode','manual',...
-        'YLim',[-0.5 0.5],...
-        'ZLimMode','manual',...
-        'ZLim',[0 1.5])
-    grid on
-    text(0.5, -0.4, 1.4, ['time=',num2str(sample*period,'%5.3f')])
-    drawnow;
     
 end
 

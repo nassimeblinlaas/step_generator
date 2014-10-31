@@ -148,8 +148,9 @@ function [M_theta, H_theta, I_tilde_j, m_tilde_j, c_tilde_j] = MH_limb(route)
         r_j     = uLINK(j).p;
   
         
-        m_tilde_j_1 = m_tilde_j + m_j_1;                                              % (23)
-        c_tilde_j_1 = (m_tilde_j * c_tilde_j + m_j_1 * c_j_1) / (m_tilde_j + m_j_1);  % (24)
+        m_tilde_j_1 = m_tilde_j + m_j_1;                                             % (23)
+        ii
+        c_tilde_j_1 = (m_tilde_j * c_tilde_j + m_j_1 * c_j_1) / (m_tilde_j + m_j_1)  % (24)
         I_tilde_j_1 = ...
             I_tilde_j + ...
             m_tilde_j * D(c_tilde_j - c_tilde_j_1) + ...
