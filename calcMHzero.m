@@ -1,3 +1,4 @@
+
 function [m_tilde , mc_tilde , c_tilde, I_tilde] = calcMHzero(j)
 global uLINK
   
@@ -10,7 +11,7 @@ global uLINK
       [m_tilde_sister, mc_tilde_sister , c_tilde_sister, I_tilde_sister] = calcMHzero(uLINK(j).sister);
       [m_tilde_child , mc_tilde_child  , c_tilde_child , I_tilde_child ] = calcMHzero(uLINK(j).child );
   
-      m_tilde  = uLINK(j).m + m_tilde_sister + m_tilde_child     ;                           % (23)
+      m_tilde  = uLINK(j).m + m_tilde_sister + m_tilde_child     ;                             % (23)
       mc_tilde = uLINK(j).m * (uLINK(j).p + uLINK(j).R * uLINK(j).c) + ...
                  mc_tilde_sister + mc_tilde_child ;
   
