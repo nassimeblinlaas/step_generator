@@ -232,7 +232,7 @@ for sample = 1 : number_of_samples
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %while ( converge == 0 )
     while ( iteration < number_of_iterations )
-        iteration = iteration + 1;
+        iteration = iteration + 1
 
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -331,9 +331,9 @@ for sample = 1 : number_of_samples
         P = PL(1:3);                            % linear momentum
         L = PL(4:6);                            % angular momentum
 
-        P
+        P;
         P_kajita(sample,:) = calcP(1);
-        Pkajita = P_kajita(sample,:)'
+        Pkajita = P_kajita(sample,:)';
         L
         L_kajita(sample,:) = calcL(1);
         Lkajita = L_kajita(sample,:)'
