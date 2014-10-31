@@ -263,22 +263,18 @@ for sample = 1 : number_of_samples
         xi_H_2 = [ v_ref_H_2 ; w_ref_H_2 ];
 
         % leg 1, find angular speeds d_theta
-        
         J_leg_1 = CalcJacobian(route_leg1);
         d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ f1Xb * xi_B;
 
         % leg 2
-        
         J_leg_2 = CalcJacobian(route_leg2);
         d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ f2Xb * xi_B;
 
         % arm 1
-        
         J_arm_1 = CalcJacobian(route_arm1);
         d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ h1Xb * xi_B;
 
         % arm 2
-        
         J_arm_2 = CalcJacobian(route_arm2);
         d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ h2Xb * xi_B;
         
@@ -322,8 +318,8 @@ for sample = 1 : number_of_samples
         H_arm_2 = H_d_theta(:, 19:24);
         
         
-        A = [ M*I3 , -M*hat(r_bg) , M_d_theta ;
-                  zeros(3,3) , I_tilde , H_d_theta ];
+        A = [ M*I3 , -M*hat(r_bg) , M_d_theta   ;
+              zeros(3,3) , I_tilde , H_d_theta ];
 
         B = [ v_ref_B ; w_ref_B ; d_theta ] ;
 
@@ -556,33 +552,21 @@ for sample = 1 : number_of_samples
     % Step 10 : find angular speeds with new linear and angular speed of B
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % leg 1
-    tmp = eye(6,6);
-    tmp(1:3,4:6) = -r_B_F1;                % vector waist leg 1
-    route = FindRoute(RLEG_JOINT5);
-    J_leg_1 = CalcJacobian(route);
-    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ tmp * xi_B;  % angular speed
+    % leg 1, find angular speeds d_theta
+    J_leg_1 = CalcJacobian(route_leg1);
+    d_theta_leg_1 = J_leg_1\ xi_F_1 - J_leg_1\ f1Xb * xi_B;
 
     % leg 2
-    tmp = eye(6,6);
-    tmp(1:3,4:6) = -r_B_F2;
-    route = FindRoute(LLEG_JOINT5);
-    J_leg_2 = CalcJacobian(route);
-    d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ tmp * xi_B;
+    J_leg_2 = CalcJacobian(route_leg2);
+    d_theta_leg_2 = J_leg_2\ xi_F_2 - J_leg_2\ f2Xb * xi_B;
 
     % arm 1
-    tmp = eye(6,6);
-    tmp(1:3,4:6) = -r_B_H1;
-    route = FindRoute(RARM_JOINT5);
-    J_arm_1 = CalcJacobian(route(:,3:end));
-    d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ tmp * xi_B;
+    J_arm_1 = CalcJacobian(route_arm1);
+    d_theta_arm_1 = J_arm_1\ xi_H_1 - J_arm_1\ h1Xb * xi_B;
 
     % arm 2
-    tmp = eye(6,6);
-    tmp(1:3,4:6) = -r_B_H2;
-    route = FindRoute(LARM_JOINT5);
-    J_arm_2 = CalcJacobian(route(:,3:end));
-    d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
+    J_arm_2 = CalcJacobian(route_arm2);
+    d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ h2Xb * xi_B;
 
     dq(sample+1,:) = [d_theta_leg_1 ; d_theta_leg_2 ; zeros(4,1) ; d_theta_arm_1; 0 ; d_theta_arm_2 ; 0] ;
     q_values(sample+1,:) = q_values(sample,:) + dq(sample,:) * period;

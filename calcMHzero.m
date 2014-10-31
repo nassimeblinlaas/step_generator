@@ -1,4 +1,3 @@
-
 function [m_tilde, c_tilde, I_tilde] = calcMHzero(j)
 global uLINK
   
@@ -27,14 +26,6 @@ global uLINK
       uLINK(j).I_tilde = I_tilde ;
       uLINK(j).mj      = mj      ;
       uLINK(j).hj      = hj      ;
-      
-      
-    c1 = uLINK(j).R * uLINK(j).c;
-    c  = uLINK(j).p + c1;
-    P = uLINK(j).m * (uLINK(j).v + cross(c1, uLINK(j).w));
-    L = cross(c, P) + uLINK(j).R * uLINK(j).I * uLINK(j).R' * uLINK(j).w;
-    L = L + calcL(uLINK(j).sister) + calcL(uLINK(j).child);
-      
   end
 end
 
