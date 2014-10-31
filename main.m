@@ -54,13 +54,6 @@ LARM_JOINT4 = 29;       %
 LARM_JOINT5 = 30;       %
 LARM_JOINT6 = 31;       %
 
-route_leg1 = FindRoute(RLEG_JOINT5); 
-route_leg2 = FindRoute(LLEG_JOINT5);
-route_arm1 = FindRoute(RARM_JOINT5);
-route_arm1 = route_arm1(3:end);
-route_arm2 = FindRoute(LARM_JOINT5);
-route_arm2 = route_arm2(3:end);
-
 v_ref_B  = zeros(3,1);  % waist linear speed
 v_ref_F_1 = zeros(3,1);
 v_ref_F_2 = zeros(3,1);
@@ -102,6 +95,13 @@ err = [0.1; 0.1];       % converging threshold
 fprintf('Initialisation\n')
 
 uLINK = loadHRPdata('HRP2main_full.wrl');
+
+route_leg1 = FindRoute(RLEG_JOINT5); 
+route_leg2 = FindRoute(LLEG_JOINT5);
+route_arm1 = FindRoute(RARM_JOINT5);
+route_arm1 = route_arm1(3:end);
+route_arm2 = FindRoute(LARM_JOINT5);
+route_arm2 = route_arm2(3:end);
 
 fprintf('Reading ./TestMorisawa2007ShortWalk32TestFGPI.dat\n')
 %Whole_data = csvread('./morisawa.csv');
