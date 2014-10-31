@@ -145,51 +145,47 @@ end
 
 
 M = TotalMass(1);                               % total robot mass
-
-v_CoM = [ Data(sample, 6); Data(sample, 7); 0];
-
 uLINK(WAIST).p = [ 0 0 0.6487 ]' ;
 uLINK(WAIST).R = eye(3,3) ;
-uLINK(WAIST).v = v_CoM + cross(r_bc,w_ref_B) ;
-uLINK(WAIST).w = [ 0; 0; 0] ;
 for i = 2:length(uLINK)
     uLINK(i).q   = halfsitting(i-1) * pi/180;
     uLINK(i).dq  = 0.0 ;
     uLINK(i).ddq = 0.0 ;
 end
-
 ForwardKinematics(1);
+
 
 for i = 1:length(uLINK)
     uLINK(i).v  = [0.0 ; 0.0 ; 0.0 ] ;
     uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
 end
+CoM_init = calcCoM();
+r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
+v_CoM = [ Data(1, 6); Data(1, 7); 0];
+uLINK(WAIST).v = v_CoM + cross(r_bc,w_ref_B) ;
+uLINK(WAIST).w = [ 0; 0; 0] ;
 
 ForwardVelocity(1);
 
-CoM_init = calcCoM();
-r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
-
-
- hold off
-    newplot
-    DrawAllJoints(1);
-    axis equal
-  	set(gca,...
-        'CameraPositionMode','manual',...
-        'CameraPosition',[4,4,1],...
-        'CameraViewAngleMode','manual',....
-        'CameraViewAngle',15,...
-        'Projection','perspective',... 
-        'XLimMode','manual',...
-        'XLim',[-0.5 0.5],...
-        'YLimMode','manual',...
-        'YLim',[-0.5 0.5],...
-        'ZLimMode','manual',...
-        'ZLim',[0 1.5])
-    grid on
-    text(0.5, -0.4, 1.4, ['time=',num2str(sample*period,'%5.3f')])
-    drawnow;
+hold off
+newplot
+DrawAllJoints(1);
+axis equal
+set(gca,...
+    'CameraPositionMode','manual',...
+    'CameraPosition',[4,4,1],...
+    'CameraViewAngleMode','manual',....
+    'CameraViewAngle',15,...
+    'Projection','perspective',... 
+    'XLimMode','manual',...
+    'XLim',[-0.5 0.5],...
+    'YLimMode','manual',...
+    'YLim',[-0.5 0.5],...
+    'ZLimMode','manual',...
+    'ZLim',[0 1.5])
+grid on
+text(0.5, -0.4, 1.4, ['time=',num2str(sample*period,'%5.3f')])
+drawnow;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
