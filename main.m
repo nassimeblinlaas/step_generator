@@ -180,6 +180,10 @@ for sample = 1 : number_of_samples
     % Step 1 : give waist linear and angular speed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+    v_CoM = [ Data(sample, 6); Data(sample, 7); Data(sample, 7)];
+    uLINK(WAIST).w = [ 0; 0; 0] ;
+    uLINK(WAIST).v = v_CoM + cross(r_bg,w_ref_B) ;
+    
     ForwardVelocity(1);
     
     v_ref_B   = v_CoM + cross(r_bg,w_ref_B) ;
@@ -551,9 +555,10 @@ for sample = 1 : number_of_samples
 
     uLINK(WAIST).v = xi_B_new(1:3);
     uLINK(WAIST).w = xi_B_new(4:6);
-    uLINK(WAIST).p = uLINK(WAIST).p + uLINK(WAIST).v * period ;
+    uLINK(WAIST).p = uLINK(WAIST).p + uLINK(WAIST).v * period;
     uLINK(WAIST).p
     
+    xi_B_new;
     
     ForwardKinematics(1);
     ForwardVelocity(1);
