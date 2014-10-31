@@ -18,7 +18,8 @@ clear ;
 global uLINK G
 G = 9.81 ;
 
-number_of_samples = 5; % size of data to treat
+number_of_samples = 3; % size of data to treat
+number_of_iterations = 3;
 period = 0.005;         % sampling period in seconds
 
 WAIST = 1;              % labels
@@ -230,7 +231,7 @@ for sample = 1 : number_of_samples
     % Small loop
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %while ( converge == 0 )
-    while ( iteration < 5 )
+    while ( iteration < number_of_iterations )
         iteration = iteration + 1;
 
         
@@ -301,17 +302,28 @@ for sample = 1 : number_of_samples
 
         [M2,c2,I_tilde] = calcMHzero(1);
         
-        M2_leg_1 = [uLINK(route_leg1).mj] ; H2_0_leg_1 = [uLINK(route_leg1).hj];
-        M2_leg_2 = [uLINK(route_leg2).mj] ; H2_0_leg_2 = [uLINK(route_leg2).hj];
-        M2_arm_1 = [uLINK(route_arm1).mj] ; H2_0_arm_1 = [uLINK(route_arm1).hj];
-        M2_arm_2 = [uLINK(route_arm2).mj] ; H2_0_arm_2 = [uLINK(route_arm2).hj];
+        M_leg_1 = [uLINK(route_leg1).mj] ;
+        M_leg_2 = [uLINK(route_leg2).mj] ;
+        M_arm_1 = [uLINK(route_arm1).mj] ;
+        M_arm_2 = [uLINK(route_arm2).mj] ;
         
-        M2_d_theta   = [M2_leg_1  , M2_leg_2  , M2_arm_1  , M2_arm_2  ];
-        H2_0_d_theta = [H2_0_leg_1, H2_0_leg_2, H2_0_arm_1, H2_0_arm_2];
-        H2_d_theta   = H2_0_d_theta - hat(uLINK(WAIST).c_tilde) * M2_d_theta ; 
+        H_0_leg_1 = [uLINK(route_leg1).hj];
+        H_0_leg_2 = [uLINK(route_leg2).hj];
+        H_0_arm_1 = [uLINK(route_arm1).hj];
+        H_0_arm_2 = [uLINK(route_arm2).hj];
         
-        A = [ M*I3 , -M*hat(r_bg) , M2_d_theta ;
-                  zeros(3,3) , I_tilde , H2_d_theta ];
+        M_d_theta   = [M_leg_1  , M_leg_2  , M_arm_1  , M_arm_2  ];
+        H_0_d_theta = [H_0_leg_1, H_0_leg_2, H_0_arm_1, H_0_arm_2];
+        H_d_theta   = H_0_d_theta - hat(uLINK(WAIST).c_tilde) * M_d_theta ; 
+        
+        H_leg_1 = H_d_theta(:, 1:6);
+        H_leg_2 = H_d_theta(:, 7:12);
+        H_arm_1 = H_d_theta(:, 13:18);
+        H_arm_2 = H_d_theta(:, 19:24);
+        
+        
+        A = [ M*I3 , -M*hat(r_bg) , M_d_theta ;
+                  zeros(3,3) , I_tilde , H_d_theta ];
 
         B = [ v_ref_B ; w_ref_B ; d_theta ] ;
 
