@@ -159,7 +159,7 @@ for i = 1:length(uLINK)
     uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
 end
 CoM_init = calcCoM();
-r_bg = CoM_init - uLINK(WAIST).p;     % vector from CoM to Base Link origin
+r_bg = CoM_init - uLINK(WAIST).p;     % vector from Base Link to CoM
 v_CoM = [ Data(1, 6); Data(1, 7); 0];
 uLINK(WAIST).v = v_CoM + cross(r_bg,w_ref_B) ;
 uLINK(WAIST).w = [ 0; 0; 0] ;
