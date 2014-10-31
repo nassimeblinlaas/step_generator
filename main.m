@@ -18,8 +18,8 @@ clear ;
 global uLINK G
 G = 9.81 ;
 
-number_of_samples = 3; % size of data to treat
-number_of_iterations = 3;
+number_of_samples = 100; % size of data to treat
+number_of_iterations = 1;
 period = 0.005;         % sampling period in seconds
 
 WAIST = 1;              % labels
@@ -167,25 +167,6 @@ uLINK(WAIST).w = [ 0; 0; 0] ;
 
 ForwardVelocity(1);
 
-hold off
-newplot
-DrawAllJoints(1);
-axis equal
-set(gca,...
-    'CameraPositionMode','manual',...
-    'CameraPosition',[4,4,1],...
-    'CameraViewAngleMode','manual',....
-    'CameraViewAngle',15,...
-    'Projection','perspective',... 
-    'XLimMode','manual',...
-    'XLim',[-0.5 0.5],...
-    'YLimMode','manual',...
-    'YLim',[-0.5 0.5],...
-    'ZLimMode','manual',...
-    'ZLim',[0 1.5])
-grid on
-text(0.5, -0.4, 1.4, ['time=',num2str(sample*period,'%5.3f')])
-drawnow;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Big loop
@@ -210,7 +191,7 @@ for sample = 1 : number_of_samples
     ForwardVelocity(1);
     
     v_ref_B   = uLINK(WAIST).v ;
-    w_ref_B   = uLINK(WAIST).w ;
+    w_ref_B   = uLINK(WAIST).w;
     
     v_ref_F_1 = [ Data(sample, 14); Data(sample, 15); Data(sample, 16)];
     w_ref_F_1 = [ 0; 0; 0];
@@ -232,7 +213,7 @@ for sample = 1 : number_of_samples
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %while ( converge == 0 )
     while ( iteration < number_of_iterations )
-        iteration = iteration + 1
+        iteration = iteration + 1;
 
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -334,9 +315,9 @@ for sample = 1 : number_of_samples
         P;
         P_kajita(sample,:) = calcP(1);
         Pkajita = P_kajita(sample,:)';
-        L
+        L;
         L_kajita(sample,:) = calcL(1);
-        Lkajita = L_kajita(sample,:)'
+        Lkajita = L_kajita(sample,:)';
         
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -537,12 +518,12 @@ for sample = 1 : number_of_samples
 
 
         if ( ( xi_B_new(1:2) - xi_B(1:2) ) < err )
-            %fprintf('converge\n');
+            fprintf('converge\n');
             converge = 1;
         else
             xi_ref = xi_B_new(1:2);
             xi = xi_B(1:2);
-            %fprintf('ne converge pas\n');
+            fprintf('ne converge pas\n');
             converge = 0;
         end
 
@@ -584,12 +565,12 @@ for sample = 1 : number_of_samples
     J_arm_2 = CalcJacobian(route(:,3:end));
     d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ tmp * xi_B;
 
-    dq(sample+1,:) = [d_theta_leg_1 ; d_theta_leg_2 ; zeros(4,1) ; d_theta_arm_1; 0 ; d_theta_arm_2 ; 0] ;
+    dq(sample+1,:) = [d_theta_leg_1 ; d_theta_leg_2 ; zeros(4,1) ; d_theta_arm_1; 0 ; d_theta_arm_2 ; 0];
     q_values(sample+1,:) = q_values(sample,:) + dq(sample,:) * period;
     
     for i = 2:length(uLINK)
-        uLINK(i).q   = q_values(i-1) ;
-        uLINK(i).dq  = dq(i-1) ;
+        uLINK(i).q   = q_values(sample + 1, i - 1) ;
+        uLINK(i).dq  = dq(sample + 1, i - 1) ;
     end
 
     uLINK(WAIST).v = xi_B_new(1:3);
@@ -600,6 +581,29 @@ for sample = 1 : number_of_samples
     
     ForwardKinematics(1);
     ForwardVelocity(1);
+    
+    
+    
+    hold off
+    newplot
+    DrawAllJoints(1);
+    axis equal
+    set(gca,...
+        'CameraPositionMode','manual',...
+        'CameraPosition',[4,4,1],...
+        'CameraViewAngleMode','manual',....
+        'CameraViewAngle',15,...
+        'Projection','perspective',... 
+        'XLimMode','manual',...
+        'XLim',[-0.5 0.5],...
+        'YLimMode','manual',...
+        'YLim',[-0.5 0.5],...
+        'ZLimMode','manual',...
+        'ZLim',[0 1.5])
+    grid on
+    text(0.5, -0.4, 1.4, ['time=',num2str(sample*period,'%5.3f')])
+    drawnow;
+
     
 end
 
