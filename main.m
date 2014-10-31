@@ -18,7 +18,7 @@ clear ;
 global uLINK G
 G = 9.81 ;
 
-number_of_samples = 100; % size of data to treat
+number_of_samples = 1000; % size of data to treat
 number_of_iterations = 1;
 period = 0.005;         % sampling period in seconds
 
@@ -172,7 +172,7 @@ ForwardVelocity(1);
 % Big loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for sample = 1 : number_of_samples
-    sample
+    %sample
     if (mod(sample, 10) == 0) sample   % for debug usage
     end
 
@@ -514,12 +514,12 @@ for sample = 1 : number_of_samples
 
 
         if ( ( xi_B_new(1:2) - xi_B(1:2) ) < err )
-            fprintf('converge\n');
+            %fprintf('converge\n');
             converge = 1;
         else
             xi_ref = xi_B_new(1:2);
             xi = xi_B(1:2);
-            fprintf('ne converge pas\n');
+            %fprintf('ne converge pas\n');
             converge = 0;
         end
 
