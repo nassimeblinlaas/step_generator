@@ -180,18 +180,10 @@ for sample = 1 : number_of_samples
     % Step 1 : give waist linear and angular speed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    for i = 1:length(uLINK)
-        uLINK(i).v  = [0.0 ; 0.0 ; 0.0 ] ;
-        uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
-    end
-    v_CoM = [ Data(1, 6); Data(1, 7); Data(1, 7)];
-    uLINK(WAIST).v = v_CoM + cross(r_bg,w_ref_B) ;
-    uLINK(WAIST).w = [ 0; 0; 0] ;
-
     ForwardVelocity(1);
     
-    v_ref_B   = uLINK(WAIST).v ;
-    w_ref_B   = uLINK(WAIST).w;
+    v_ref_B   = v_CoM + cross(r_bg,w_ref_B) ;
+    w_ref_B   = [ 0; 0; 0] ;
     
     v_ref_F_1 = [ Data(sample, 14); Data(sample, 15); Data(sample, 16)];
     w_ref_F_1 = [ 0; 0; 0];
@@ -530,7 +522,7 @@ for sample = 1 : number_of_samples
     given_xi_B(sample, :) = xi_B;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Step 10 : find angular speeds with new linear and angular speed of B
+    % Step 10 : find articular velocity with new linear and angular speed of B
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % leg 1, find angular speeds d_theta
@@ -560,7 +552,7 @@ for sample = 1 : number_of_samples
     uLINK(WAIST).v = xi_B_new(1:3);
     uLINK(WAIST).w = xi_B_new(4:6);
     uLINK(WAIST).p = uLINK(WAIST).p + uLINK(WAIST).v * period ;
-    
+    uLINK(WAIST).p
     
     
     ForwardKinematics(1);
@@ -579,9 +571,9 @@ for sample = 1 : number_of_samples
         'CameraViewAngle',15,...
         'Projection','perspective',... 
         'XLimMode','manual',...
-        'XLim',[-0.5 0.5],...
+        'XLim',[-0.5 3.0],...
         'YLimMode','manual',...
-        'YLim',[-0.5 0.5],...
+        'YLim',[-0.5 1.0],...
         'ZLimMode','manual',...
         'ZLim',[0 1.5])
     grid on
