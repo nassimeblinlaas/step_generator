@@ -6,7 +6,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 close all ;
-clc ;
+%clc ;
 clear ;
 
 
@@ -159,9 +159,9 @@ for i = 1:length(uLINK)
     uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
 end
 CoM_init = calcCoM();
-r_bc = uLINK(WAIST).p - CoM_init;     % vector from CoM to Base Link origin
+r_bg = CoM_init - uLINK(WAIST).p;     % vector from CoM to Base Link origin
 v_CoM = [ Data(1, 6); Data(1, 7); 0];
-uLINK(WAIST).v = v_CoM + cross(r_bc,w_ref_B) ;
+uLINK(WAIST).v = v_CoM + cross(r_bg,w_ref_B) ;
 uLINK(WAIST).w = [ 0; 0; 0] ;
 
 ForwardVelocity(1);
@@ -203,12 +203,12 @@ for sample = 1 : number_of_samples
         uLINK(i).w  = [0.0 ; 0.0 ; 0.0 ] ;
     end
     v_CoM = [ Data(1, 6); Data(1, 7); Data(1, 7)];
-    uLINK(WAIST).v = v_CoM + cross(r_bc,w_ref_B) ;
+    uLINK(WAIST).v = v_CoM + cross(r_bg,w_ref_B) ;
     uLINK(WAIST).w = [ 0; 0; 0] ;
 
     ForwardVelocity(1);
     
-    v_ref_B    = uLINK(WAIST).v ;
+    v_ref_B   = uLINK(WAIST).v ;
     w_ref_B   = uLINK(WAIST).w ;
     
     v_ref_F_1 = [ Data(sample, 14); Data(sample, 15); Data(sample, 16)];
@@ -241,10 +241,10 @@ for sample = 1 : number_of_samples
         ForwardKinematics(1);
                 
         % vector waist -> end effector
-        r_B_F1 = hat(uLINK(WAIST).p - uLINK(RLEG_JOINT5).p);
-        r_B_F2 = hat(uLINK(WAIST).p - uLINK(LLEG_JOINT5).p);
-        r_B_H1 = hat(uLINK(WAIST).p - uLINK(RARM_JOINT5).p);
-        r_B_H2 = hat(uLINK(WAIST).p - uLINK(LARM_JOINT5).p);
+        r_B_F1 = hat(uLINK(RLEG_JOINT5).p - uLINK(WAIST).p);
+        r_B_F2 = hat(uLINK(LLEG_JOINT5).p - uLINK(WAIST).p);
+        r_B_H1 = hat(uLINK(RARM_JOINT5).p - uLINK(WAIST).p);
+        r_B_H2 = hat(uLINK(LARM_JOINT5).p - uLINK(WAIST).p);
 
         xi_B   = [ v_ref_B   ; w_ref_B   ];
         xi_F_1 = [ v_ref_F_1 ; w_ref_F_1 ];
@@ -280,7 +280,9 @@ for sample = 1 : number_of_samples
         
         J_arm_2 = CalcJacobian(route_arm2);
         d_theta_arm_2 = J_arm_2\ xi_H_2 - J_arm_2\ h2Xb * xi_B;
-
+        
+        d_theta = [d_theta_leg_1 ;d_theta_leg_2 ;d_theta_arm_1 ;d_theta_arm_2];
+        
         for i = 1:length(uLINK)
             uLINK(i).dq = 0.0 ;
         end
@@ -297,36 +299,7 @@ for sample = 1 : number_of_samples
         % Step 3 : find angular momentum L
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-        % Call MH subroutine finding intertia matrices
-        [ M_d_theta, H_d_theta, I_tilde, M_leg_1, M_leg_2, ...
-            M_arm_1, M_arm_2, H_leg_1, H_leg_2, H_arm_1, H_arm_2 ] = MH();
-        d_theta = [d_theta_leg_1' d_theta_leg_2' ...
-            d_theta_arm_1' d_theta_arm_2'];
-
-        A = [ M*I3 , -M*hat(r_bc) , M_d_theta ;
-              zeros(3,3) , I_tilde , H_d_theta ];
-
-        B = [ v_ref_B ; w_ref_B ; d_theta' ]  ;
-
-        PL =   A * B;
-        P  = PL(1:3);                           % linear momentum
-        L  = PL(4:6);                           % angular momentum
-
-        
-        
-        P_kajita(sample,:) = calcP(1);
-        L_kajita(sample,:) = calcL(1);
-    
-        P_nous(sample,:) = P;
-        L_nous(sample,:) = L;
-        
-        dL = (L - L_prev) / period;             % finite difference method
-
-        L_prev = L;                             % save previous value
-
-        [M2,mc2,c2,I_tilde2] = calcMHzero(1);
-        
+        [M2,c2,I_tilde] = calcMHzero(1);
         
         M2_leg_1 = [uLINK(route_leg1).mj] ; H2_0_leg_1 = [uLINK(route_leg1).hj];
         M2_leg_2 = [uLINK(route_leg2).mj] ; H2_0_leg_2 = [uLINK(route_leg2).hj];
@@ -337,26 +310,29 @@ for sample = 1 : number_of_samples
         H2_0_d_theta = [H2_0_leg_1, H2_0_leg_2, H2_0_arm_1, H2_0_arm_2];
         H2_d_theta   = H2_0_d_theta - hat(uLINK(WAIST).c_tilde) * M2_d_theta ; 
         
-        A2 = [ M*I3 , -M*hat(r_bc) , M2_d_theta ;
-                  zeros(3,3) , I_tilde2 , H2_d_theta ];
+        A = [ M*I3 , -M*hat(r_bg) , M2_d_theta ;
+                  zeros(3,3) , I_tilde , H2_d_theta ];
 
-        B2 = [ v_ref_B ; w_ref_B ; d_theta' ] ;
+        B = [ v_ref_B ; w_ref_B ; d_theta ] ;
 
-        PL2 = A2 * B2;
-        P2 = PL2(1:3);                            % linear momentum
-        L2 = PL2(4:6);                            % angular momentum
+        PL = A * B;
+        P = PL(1:3);                            % linear momentum
+        L = PL(4:6);                            % angular momentum
 
-        P;
-        P2;
-        P_kajita(sample,:)';
+        P
+        P_kajita(sample,:) = calcP(1);
+        Pkajita = P_kajita(sample,:)'
+        L
+        L_kajita(sample,:) = calcL(1);
+        Lkajita = L_kajita(sample,:)'
         
-        L;
-        L2;
-        L_kajita(sample,:)';
         
-        dL = (L2 - L_prev) / period;             % finite difference method
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %compute dL
+        
+        dL = (L - L_prev) / period;             % finite difference method
 
-        L_prev = L2;                             % save previous value
+        L_prev = L;                             % save previous value
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Step 4 : give \ddot{z_G}
@@ -508,7 +484,7 @@ for sample = 1 : number_of_samples
 
         temp0 = zeros(6,6);
         temp0(1:3, 1:3) = M * I3;
-        temp0(1:3, 4:6) = -M * hat(r_bc);
+        temp0(1:3, 4:6) = -M * hat(r_bg);
         temp0(4:6, 4:6) = I_tilde;
 
 
